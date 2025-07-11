@@ -1,336 +1,105 @@
-name: 🤖 Auto Pull Request Management
+name: 🔄 Auto PR Creation
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main, develop]
-  pull_request_review:
-    types: [submitted]
-  check_suite:
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Nom de la branche pour laquelle créer une PR'
+        required: true
+        type: string
+      target_branch:
+        description: 'Branche cible (develop par défaut)'
+        required: false
+        default: 'develop'
+        type: string
 
 jobs:
-  # ===================================
-  # 1. VALIDATION AUTOMATIQUE DES PRs
-  # ===================================
-  pr-validation:
-    name: 🔍 PR Validation
+  create-pr:
+    name: 🤖 Création automatique de PR
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    
-    outputs:
-      pr-valid: ${{ steps.validation.outputs.valid }}
-      auto-mergeable: ${{ steps.validation.outputs.auto_mergeable }}
     
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.branch_name }}
+
+      - name: 🎯 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📝 Analyser les commits
+        id: analyze
+        run: |
+          # Analyser les commits pour générer le titre et la description
+          COMMITS=$(git log ${{ inputs.target_branch }}..${{ inputs.branch_name }} --oneline)
           
-      - name: 🔍 Validate PR
-        id: validation
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { context } = require('@actions/github');
-            const pr = context.payload.pull_request;
-            
-            console.log('🔍 Analyzing PR:', pr.title);
-            
-            // Vérifier le titre suit la convention
-            const titleRegex = /^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+/;
-            const validTitle = titleRegex.test(pr.title);
-            
-            // Vérifier la taille de la PR
-            const maxChanges = 500;
-            const changes = pr.additions + pr.deletions;
-            const reasonableSize = changes <= maxChanges;
-            
-            // Vérifier les fichiers modifiés
-            const files = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number
-            });
-            
-            // Vérifier qu'il n'y a pas de fichiers sensibles
-            const sensitiveFiles = files.data.filter(file => 
-              file.filename.includes('.env') || 
-              file.filename.includes('secrets') ||
-              file.filename.includes('private')
-            );
-            
-            // Vérifier la branche source
-            const validBranch = pr.head.ref.startsWith('feature/') || 
-                               pr.head.ref.startsWith('bugfix/') || 
-                               pr.head.ref.startsWith('hotfix/');
-            
-            // Déterminer si auto-mergeable
-            const isDependabot = pr.user.login === 'dependabot[bot]';
-            const isSmallPR = changes <= 100;
-            const autoMergeable = (isDependabot || isSmallPR) && validTitle && reasonableSize;
-            
-            const result = {
-              valid: validTitle && reasonableSize && sensitiveFiles.length === 0 && validBranch,
-              auto_mergeable: autoMergeable,
-              title_valid: validTitle,
-              size_ok: reasonableSize,
-              no_sensitive_files: sensitiveFiles.length === 0,
-              valid_branch: validBranch,
-              changes: changes,
-              sensitive_files: sensitiveFiles.length
-            };
-            
-            console.log('📊 Validation result:', result);
-            
-            // Commenter la PR avec les résultats
-            const comment = `## 🤖 Validation Automatique PR
-            
-            ### ✅ Critères de Validation
-            - ${result.title_valid ? '✅' : '❌'} **Titre**: Suit la convention conventional commits
-            - ${result.size_ok ? '✅' : '❌'} **Taille**: ${changes} changements (max: ${maxChanges})
-            - ${result.no_sensitive_files ? '✅' : '❌'} **Sécurité**: Pas de fichiers sensibles
-            - ${result.valid_branch ? '✅' : '❌'} **Branche**: Suit la convention de nommage
-            
-            ### 🎯 Statut
-            ${result.valid ? '✅ **PR Validée** - Prête pour review' : '❌ **PR Non Validée** - Corrections nécessaires'}
-            ${result.auto_mergeable ? '\n🚀 **Auto-merge eligible** après validation des checks' : ''}
-            
-            ### 📋 Actions Suivantes
-            ${result.valid ? 
-              '- Attendre la validation des tests automatiques\n- Demander une code review\n- Merger après approbation' : 
-              '- Corriger les problèmes identifiés\n- Mettre à jour la PR'
-            }
-            `;
-            
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              body: comment
-            });
-            
-            // Set outputs
-            core.setOutput('valid', result.valid);
-            core.setOutput('auto_mergeable', result.auto_mergeable);
-            
-            return result;
+          if [ -z "$COMMITS" ]; then
+            echo "❌ Aucun commit trouvé"
+            exit 1
+          fi
+          
+          # Extraire le type principal
+          MAIN_TYPE=$(echo "$COMMITS" | head -1 | sed -n 's/^[a-f0-9]* \([a-z]*\).*/\1/p')
+          
+          # Générer le titre
+          TITLE="${MAIN_TYPE}(${{ inputs.branch_name }}): $(echo '${{ inputs.branch_name }}' | sed 's/feature\///;s/bugfix\///;s/-/ /g')"
+          
+          # Générer la description
+          cat > pr_description.md << 'EOF'
+          ## 📋 Description
 
-  # ===================================
-  # 2. AUTO-ASSIGNMENT ET LABELS
-  # ===================================
-  pr-automation:
-    name: 🏷️ PR Automation
-    runs-on: ubuntu-latest
-    needs: pr-validation
-    if: github.event_name == 'pull_request' && needs.pr-validation.outputs.pr-valid == 'true'
-    
-    steps:
-      - name: 🏷️ Auto-assign labels and reviewers
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { context } = require('@actions/github');
-            const pr = context.payload.pull_request;
-            
-            // Déterminer les labels basés sur les fichiers modifiés
-            const files = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number
-            });
-            
-            let labels = [];
-            let reviewers = [];
-            
-            const fileNames = files.data.map(f => f.filename);
-            
-            // Labels basés sur les fichiers
-            if (fileNames.some(f => f.startsWith('frontend/'))) {
-              labels.push('frontend');
-            }
-            if (fileNames.some(f => f.startsWith('backend/'))) {
-              labels.push('backend');
-            }
-            if (fileNames.some(f => f.startsWith('docker/'))) {
-              labels.push('infrastructure');
-            }
-            if (fileNames.some(f => f.includes('test') || f.includes('.test.'))) {
-              labels.push('tests');
-            }
-            if (fileNames.some(f => f.includes('.md'))) {
-              labels.push('documentation');
-            }
-            
-            // Labels basés sur le titre
-            if (pr.title.startsWith('feat')) {
-              labels.push('enhancement');
-            } else if (pr.title.startsWith('fix')) {
-              labels.push('bug');
-            } else if (pr.title.startsWith('docs')) {
-              labels.push('documentation');
-            }
-            
-            // Taille de la PR
-            const changes = pr.additions + pr.deletions;
-            if (changes < 50) {
-              labels.push('size/small');
-            } else if (changes < 200) {
-              labels.push('size/medium');
-            } else {
-              labels.push('size/large');
-            }
-            
-            // Ajouter les labels
-            if (labels.length > 0) {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                labels: labels
-              });
-            }
-            
-            // Auto-assigner des reviewers (à personnaliser selon votre équipe)
-            // const teamReviewers = ['user1', 'user2']; // Remplacer par vos utilisateurs
-            // if (teamReviewers.length > 0) {
-            //   await github.rest.pulls.requestReviewers({
-            //     owner: context.repo.owner,
-            //     repo: context.repo.repo,
-            //     pull_number: pr.number,
-            //     reviewers: teamReviewers.slice(0, 2) // Max 2 reviewers
-            //   });
-            // }
+          Cette PR contient les changements suivants :
 
-  # ===================================
-  # 3. AUTO-MERGE INTELLIGENT
-  # ===================================
-  auto-merge:
-    name: 🚀 Smart Auto-Merge
-    runs-on: ubuntu-latest
-    needs: [pr-validation]
-    if: |
-      github.event_name == 'check_suite' && 
-      github.event.check_suite.conclusion == 'success' &&
-      needs.pr-validation.outputs.auto-mergeable == 'true'
-    
-    steps:
-      - name: 🔍 Check PR status
-        id: pr-status
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const prs = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: context.payload.check_suite.head_branch
-            });
-            
-            if (prs.data.length === 0) {
-              console.log('❌ No open PR found for this branch');
-              return { canMerge: false };
-            }
-            
-            const pr = prs.data[0];
-            
-            // Vérifier les conditions de merge
-            const conditions = {
-              mergeable: pr.mergeable === true,
-              approved: false, // On vérifiera ça après
-              checksPass: true, // Le check_suite est success
-              noConflicts: pr.mergeable_state !== 'dirty'
-            };
-            
-            // Vérifier les approbations
-            const reviews = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number
-            });
-            
-            const latestReviews = {};
-            reviews.data.forEach(review => {
-              latestReviews[review.user.login] = review.state;
-            });
-            
-            const approvals = Object.values(latestReviews).filter(state => state === 'APPROVED').length;
-            const rejections = Object.values(latestReviews).filter(state => state === 'CHANGES_REQUESTED').length;
-            
-            conditions.approved = approvals > 0 && rejections === 0;
-            
-            const canMerge = Object.values(conditions).every(Boolean);
-            
-            console.log('🔍 Merge conditions:', conditions);
-            console.log('🎯 Can auto-merge:', canMerge);
-            
-            return { canMerge, prNumber: pr.number, conditions };
-            
-      - name: 🚀 Auto-merge PR
-        if: fromJSON(steps.pr-status.outputs.result).canMerge
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { canMerge, prNumber } = ${{ steps.pr-status.outputs.result }};
-            
-            if (!canMerge) {
-              console.log('❌ Auto-merge conditions not met');
-              return;
-            }
-            
-            try {
-              const result = await github.rest.pulls.merge({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-                commit_title: `🤖 Auto-merge: ${context.payload.check_suite.head_commit.message}`,
-                merge_method: 'squash'
-              });
-              
-              console.log('✅ PR auto-merged successfully');
-              
-              // Commenter le succès
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: '🚀 **Auto-merged** par le bot après validation de tous les checks !'
-              });
-              
-            } catch (error) {
-              console.log('❌ Auto-merge failed:', error.message);
-            }
+          EOF
+          
+          echo "$COMMITS" | sed 's/^[a-f0-9]* /- /' >> pr_description.md
+          
+          cat >> pr_description.md << 'EOF'
 
-  # ===================================
-  # 4. NETTOYAGE DES BRANCHES
-  # ===================================
-  cleanup:
-    name: 🧹 Cleanup Merged Branches
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-    
-    steps:
-      - name: 🧹 Delete merged branch
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const branchName = context.payload.pull_request.head.ref;
-            
-            // Ne pas supprimer les branches principales
-            if (['main', 'develop'].includes(branchName)) {
-              console.log('🛡️ Protected branch, skipping deletion');
-              return;
-            }
-            
-            try {
-              await github.rest.git.deleteRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: `heads/${branchName}`
-              });
-              
-              console.log(`🗑️ Deleted branch: ${branchName}`);
-            } catch (error) {
-              console.log(`❌ Failed to delete branch: ${error.message}`);
-            }
+          ## 🧪 Tests
+
+          - [x] Code vérifié localement
+          - [x] Messages de commit conventionnels
+          - [ ] Tests manuels effectués
+          - [ ] Documentation mise à jour si nécessaire
+
+          ## 📝 Type de changement
+
+          - [ ] 🐛 Bug fix
+          - [ ] ✨ Nouvelle feature  
+          - [ ] 💥 Breaking change
+          - [ ] 📚 Documentation
+
+          ## 🔍 Checklist
+
+          - [x] Code suit les conventions du projet
+          - [x] Self-review effectuée
+          - [x] Pipeline CI/CD passe
+          - [ ] Tests additionnels si nécessaire
+          EOF
+          
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "description<<EOF" >> $GITHUB_OUTPUT
+          cat pr_description.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Créer la Pull Request
+        run: |
+          # Utiliser GitHub CLI pour créer la PR
+          gh pr create \
+            --title "${{ steps.analyze.outputs.title }}" \
+            --body-file pr_description.md \
+            --base ${{ inputs.target_branch }} \
+            --head ${{ inputs.branch_name }} \
+            --label "automated-pr,needs-review"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📢 Résultat
+        run: |
+          echo "✅ Pull Request créée avec succès !"
+          echo "📋 Titre: ${{ steps.analyze.outputs.title }}"
+          echo "🎯 Vers: ${{ inputs.target_branch }}"
