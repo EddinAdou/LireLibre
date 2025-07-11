@@ -19,5 +19,9 @@ export default defineConfig({
         secure: false,
       },
     },
+    // Configuration pour gérer les erreurs 404 sur les ressources statiques
+    middlewareMode: false,
   },
+  // Configuration pour éviter les erreurs de favicon
+  publicDir: 'public',
 })

@@ -1,0 +1,95 @@
+version: 2
+updates:
+  # Frontend - npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "EddinAdou"
+    assignees:
+      - "EddinAdou"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "frontend"
+    allow:
+      - dependency-type: "direct:production"
+      - dependency-type: "direct:development"
+    ignore:
+      # Ignore major version updates for React (require manual review)
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  # Backend - Composer dependencies
+  - package-ecosystem: "composer"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "EddinAdou"
+    assignees:
+      - "EddinAdou"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "backend"
+    allow:
+      - dependency-type: "direct:production"
+      - dependency-type: "direct:development"
+    ignore:
+      # Ignore major Symfony version updates (require manual review)
+      - dependency-name: "symfony/*"
+        update-types: ["version-update:semver-major"]
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/docker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "EddinAdou"
+    assignees:
+      - "EddinAdou"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "EddinAdou"
+    assignees:
+      - "EddinAdou"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"

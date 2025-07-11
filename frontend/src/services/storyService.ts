@@ -4,6 +4,7 @@ import { Story, ApiResponse, PaginatedResponse } from '../types';
 interface CreateStoryData {
   title: string;
   content: string;
+  description?: string;
   summary?: string;
   genre: string;
   tags?: string[];
@@ -12,6 +13,7 @@ interface CreateStoryData {
 
 interface UpdateStoryData extends Partial<CreateStoryData> {
   id: number;
+  status?: string;
 }
 
 interface StoryFilters {
@@ -41,19 +43,19 @@ class StoryService {
   }
 
   async getStory(id: number): Promise<Story> {
-    const response = await apiService.get<ApiResponse<Story>>(`/stories/${id}`);
-    return response.data;
+    const response = await apiService.get<{ story: Story }>(`/stories/${id}`);
+    return response.story;
   }
 
   async createStory(data: CreateStoryData): Promise<Story> {
-    const response = await apiService.post<ApiResponse<Story>>('/stories', data);
-    return response.data;
+    const response = await apiService.post<{ story: Story }>('/stories', data);
+    return response.story;
   }
 
   async updateStory(data: UpdateStoryData): Promise<Story> {
     const { id, ...updateData } = data;
-    const response = await apiService.put<ApiResponse<Story>>(`/stories/${id}`, updateData);
-    return response.data;
+    const response = await apiService.put<{ story: Story }>(`/stories/${id}`, updateData);
+    return response.story;
   }
 
   async deleteStory(id: number): Promise<void> {
