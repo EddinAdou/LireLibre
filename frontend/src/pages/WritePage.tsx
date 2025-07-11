@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, Eye, Settings, Image, Tag } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Story, StoryCategory, CreateStoryRequest, UpdateStoryRequest } from '../types/story';
 import { storiesService } from '../services/storiesService';
 import RichTextEditor from '../components/editor/RichTextEditor';
@@ -71,7 +72,7 @@ const WritePage: React.FC = () => {
         content,
         category,
         tags,
-        isPublished: isDraft ? false : isPublished,
+        isPublished: !isDraft, // Publier si ce n'est pas un brouillon
         ...(coverImage && { coverImage }),
       };
 
@@ -81,16 +82,32 @@ const WritePage: React.FC = () => {
           ...storyData,
         };
         await storiesService.updateStory(updateData);
+        
+        // Rediriger vers la page des histoires après publication
+        if (!isDraft) {
+          navigate('/stories');
+        }
       } else {
         const createData: CreateStoryRequest = storyData;
         const newStory = await storiesService.createStory(createData);
-        navigate(`/stories/${newStory.id}/edit`);
+        
+        // Rediriger après création
+        if (isDraft) {
+          navigate(`/stories/${newStory.id}/edit`);
+        } else {
+          navigate('/stories');
+        }
       }
 
       // Afficher une notification de succès
-      console.log('Histoire sauvegardée avec succès');
+      if (isDraft) {
+        toast.success('Brouillon sauvegardé avec succès');
+      } else {
+        toast.success('Histoire publiée avec succès !');
+      }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      toast.error(`Erreur lors de la ${isDraft ? 'sauvegarde' : 'publication'}`);
     } finally {
       setSaving(false);
     }

@@ -156,6 +156,21 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   return (
     <div className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
+      {/* Style global pour forcer LTR */}
+      <style>
+        {`
+          [contenteditable] {
+            direction: ltr !important;
+            text-align: left !important;
+            unicode-bidi: embed !important;
+          }
+          [contenteditable] * {
+            direction: ltr !important;
+            text-align: left !important;
+          }
+        `}
+      </style>
+      
       {/* Barre d'outils */}
       <div className="bg-gray-50 border-b border-gray-300 p-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -308,6 +323,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           fontSize: '16px',
           direction: 'ltr', // Force left-to-right text direction
           textAlign: 'left', // Force left alignment
+          unicodeBidi: 'embed', // Force LTR for mixed content
+          writingMode: 'horizontal-tb', // Horizontal writing
         }}
         dir="ltr" // HTML attribute for text direction
       />
