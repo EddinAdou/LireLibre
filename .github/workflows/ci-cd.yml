@@ -1,10 +1,12 @@
-name: CI/CD Pipeline
+name: 🚀 CI/CD Pipeline Avancé
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  release:
+    types: [ created ]
 
 env:
   NODE_VERSION: '18'
