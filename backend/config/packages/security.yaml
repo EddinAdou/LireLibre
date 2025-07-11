@@ -7,7 +7,7 @@ security:
         app_user_provider:
             entity:
                 class: App\Entity\User
-                property: email
+                property: username
 
     firewalls:
         dev:
@@ -15,18 +15,9 @@ security:
             security: false
         
         login:
-            pattern: ^/api/auth/login
+            pattern: ^/api/auth/(login|register)
             stateless: true
-            json_login:
-                check_path: /api/auth/login
-                username_path: email
-                password_path: password
-                success_handler: lexik_jwt_authentication.handler.authentication_success
-                failure_handler: lexik_jwt_authentication.handler.authentication_failure
-        
-        register:
-            pattern: ^/api/auth/register
-            stateless: true
+            security: false
             
         api:
             pattern: ^/api
