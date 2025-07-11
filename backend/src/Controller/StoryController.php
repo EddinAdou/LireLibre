@@ -176,8 +176,17 @@ class StoryController extends AbstractController
             $story->setTags($tags ?: []);
         }
         
-        // Generate slug from title
-        $slug = $this->slugger->slug($data['title'])->lower();
+        // Generate unique slug from title
+        $baseSlug = $this->slugger->slug($data['title'])->lower();
+        $slug = $baseSlug;
+        $counter = 1;
+        
+        // Check if slug already exists and make it unique
+        while ($this->entityManager->getRepository(Story::class)->findOneBy(['slug' => $slug])) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+        
         $story->setSlug($slug);
         
         // Set publication status

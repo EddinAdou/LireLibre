@@ -9,6 +9,7 @@ import { Save, ArrowLeft, Eye, Settings, Image, Tag } from 'lucide-react';
 import { Story, StoryCategory, CreateStoryRequest, UpdateStoryRequest } from '../types/story';
 import { storiesService } from '../services/storiesService';
 import RichTextEditor from '../components/editor/RichTextEditor';
+import StoryPreview from '../components/StoryPreview';
 
 const WritePage: React.FC = () => {
   const { storyId } = useParams<{ storyId?: string }>();
@@ -26,6 +27,7 @@ const WritePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const categories: StoryCategory[] = [
     'Fiction', 'Non-fiction', 'Poésie', 'Théâtre', 'Science-fiction',
@@ -150,6 +152,18 @@ const WritePage: React.FC = () => {
 
             <div className="flex items-center space-x-3">
               <button
+                onClick={() => setShowPreview(!showPreview)}
+                className={`p-2 rounded-lg transition-colors ${
+                  showPreview 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                title="Aperçu"
+              >
+                <Eye className="h-5 w-5" />
+              </button>
+              
+              <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="text-gray-500 hover:text-gray-700 p-2"
                 title="Paramètres"
@@ -203,13 +217,25 @@ const WritePage: React.FC = () => {
                   className="w-full text-gray-600 placeholder-gray-400 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-6 resize-none"
                 />
 
-                {/* Éditeur de contenu */}
-                <RichTextEditor
-                  value={content}
-                  onChange={setContent}
-                  placeholder="Commencez à écrire votre histoire..."
-                  autoSave={true}
-                />
+                {/* Éditeur de contenu ou Aperçu */}
+                {showPreview ? (
+                  <StoryPreview
+                    title={title}
+                    description={description}
+                    content={content}
+                    category={category}
+                    tags={tags}
+                    coverImage={coverImage || undefined}
+                    coverImageUrl={story?.coverImageUrl}
+                  />
+                ) : (
+                  <RichTextEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Commencez à écrire votre histoire..."
+                    autoSave={true}
+                  />
+                )}
               </div>
             </div>
           </div>

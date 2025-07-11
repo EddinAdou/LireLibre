@@ -306,7 +306,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         style={{
           lineHeight: '1.8',
           fontSize: '16px',
+          direction: 'ltr', // Force left-to-right text direction
+          textAlign: 'left', // Force left alignment
         }}
+        dir="ltr" // HTML attribute for text direction
       />
 
       {/* Barre de statut */}
