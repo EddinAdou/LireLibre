@@ -8,6 +8,7 @@ import StoryList from './pages/StoryList'
 import StoryDetail from './pages/StoryDetail'
 import WriteStory from './pages/WriteStory'
 import Profile from './pages/Profile'
+import StorySearch from './components/StorySearch'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/stories" element={<StoryList />} />
+          <Route path="/search" element={<StorySearch />} />
           <Route path="/stories/:id" element={<StoryDetail />} />
           <Route path="/write" element={<WriteStory />} />
           <Route path="/profile" element={<Profile />} />
