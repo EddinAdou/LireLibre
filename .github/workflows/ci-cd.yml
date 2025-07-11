@@ -31,6 +31,17 @@ jobs:
         run: |
           # Vérifier les messages de commit suivent la convention
           git log --oneline ${{ github.event.pull_request.base.sha }}..${{ github.sha }} | while read line; do
+            # Ignorer les commits de merge automatiques
+            if echo "$line" | grep -qE "^[a-f0-9]+ Merge [a-f0-9]+ into [a-f0-9]+"; then
+              echo "⚠️ Commit de merge automatique ignoré: $line"
+              continue
+            fi
+            # Ignorer les commits de merge avec références de branches
+            if echo "$line" | grep -qE "^[a-f0-9]+ Merge (branch|pull request)"; then
+              echo "⚠️ Commit de merge ignoré: $line"
+              continue
+            fi
+            # Vérifier le format conventionnel pour les autres commits
             if ! echo "$line" | grep -qE "^[a-f0-9]+ (feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+"; then
               echo "❌ Message de commit invalide: $line"
               echo "Format attendu: type(scope): description"

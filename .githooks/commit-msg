@@ -28,8 +28,24 @@ Exemples:
   fix(stories): resolve pagination bug
   docs: update API documentation"
 
-if ! grep -qE "$commit_regex" "$1"; then
+# Lire le message de commit
+commit_message=$(cat "$1")
+
+# Ignorer les commits de merge automatiques
+if echo "$commit_message" | grep -qE "^Merge [a-f0-9]+ into [a-f0-9]+"; then
+    echo "${YELLOW}⚠️  Commit de merge automatique détecté - validation ignorée${NC}"
+    exit 0
+fi
+
+# Ignorer les commits de merge avec références de branches
+if echo "$commit_message" | grep -qE "^Merge (branch|pull request)"; then
+    echo "${YELLOW}⚠️  Commit de merge détecté - validation ignorée${NC}"
+    exit 0
+fi
+
+if ! echo "$commit_message" | grep -qE "$commit_regex"; then
     echo "${RED}$error_msg${NC}" >&2
+    echo "${RED}Message reçu: $commit_message${NC}" >&2
     exit 1
 fi
 
