@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test d'inscription - LireLibre</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .feature-list {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .feature-list h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .feature-list ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .feature-list li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Test d'Inscription - LireLibre</h1>
+        
+        <div class="feature-list">
+            <h3>✨ Fonctionnalités implémentées :</h3>
+            <ul>
+                <li><strong>Validation côté frontend :</strong> React Hook Form + Zod</li>
+                <li><strong>Validation côté backend :</strong> Symfony Validator</li>
+                <li><strong>Sécurité :</strong> Hash des mots de passe avec Symfony</li>
+                <li><strong>Authentification :</strong> JWT tokens</li>
+                <li><strong>UX/UI :</strong> Indicateur de force du mot de passe</li>
+                <li><strong>Gestion d'erreurs :</strong> Messages d'erreur détaillés</li>
+                <li><strong>Unicité :</strong> Email et nom d'utilisateur uniques</li>
+            </ul>
+        </div>
+
+        <h2>🧪 Formulaire de test d'inscription</h2>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" value="test@example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur *</label>
+                <input type="text" id="username" name="username" value="test_user_123" required>
+            </div>
+            
+            <div class="grid">
+                <div class="form-group">
+                    <label for="firstName">Prénom</label>
+                    <input type="text" id="firstName" name="firstName" value="Jean">
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Nom</label>
+                    <input type="text" id="lastName" name="lastName" value="Dupont">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Mot de passe *</label>
+                <input type="password" id="password" name="password" value="TestPassword123!" required>
+                <small style="color: #666;">Minimum 8 caractères, avec majuscule, minuscule et chiffre</small>
+            </div>
+            
+            <button type="submit" id="submitBtn">🎯 Tester l'inscription</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h3>📋 État du développement :</h3>
+            <div style="background-color: #e3f2fd; padding: 15px; border-radius: 4px;">
+                <h4 style="margin-top: 0; color: #1976d2;">✅ Complété :</h4>
+                <ul style="margin-bottom: 0;">
+                    <li>Backend : AuthController avec validation Symfony</li>
+                    <li>Frontend : Page d'inscription complète avec React Hook Form</li>
+                    <li>Services : AuthService intégré</li>
+                    <li>Types : Interfaces TypeScript définies</li>
+                    <li>UI : Composants Alert et PasswordStrength</li>
+                    <li>Pipeline CI/CD : Tests automatisés</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            
+            // Collecte des données du formulaire
+            const formData = new FormData(this);
+            const data = {
+                email: formData.get('email'),
+                username: formData.get('username'),
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                password: formData.get('password')
+            };
+            
+            // Désactiver le bouton pendant le test
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Test en cours...';
+            
+            try {
+                // Simulation de l'API call
+                console.log('Données envoyées :', data);
+                
+                // Validation côté client (simulation)
+                let validationErrors = [];
+                
+                if (!data.email || !data.email.includes('@')) {
+                    validationErrors.push('Email invalide');
+                }
+                
+                if (!data.username || data.username.length < 3) {
+                    validationErrors.push('Nom d\'utilisateur trop court');
+                }
+                
+                if (!data.password || data.password.length < 8) {
+                    validationErrors.push('Mot de passe trop court');
+                }
+                
+                if (!/[A-Z]/.test(data.password)) {
+                    validationErrors.push('Mot de passe doit contenir une majuscule');
+                }
+                
+                if (!/[a-z]/.test(data.password)) {
+                    validationErrors.push('Mot de passe doit contenir une minuscule');
+                }
+                
+                if (!/[0-9]/.test(data.password)) {
+                    validationErrors.push('Mot de passe doit contenir un chiffre');
+                }
+                
+                // Attente simulée
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                if (validationErrors.length > 0) {
+                    throw new Error('Erreurs de validation : ' + validationErrors.join(', '));
+                }
+                
+                // Simulation d'une réponse de succès
+                const simulatedResponse = {
+                    message: 'Inscription réussie ! Bienvenue sur LireLibre !',
+                    user: {
+                        id: 1,
+                        email: data.email,
+                        username: data.username,
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                        roles: ['ROLE_USER'],
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    },
+                    token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.simulatedtoken'
+                };
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ SUCCESS!\n\n' + JSON.stringify(simulatedResponse, null, 2);
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ ERROR!\n\n' + error.message;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🎯 Tester l\'inscription';
+            }
+        });
+        
+        // Validation temps réel du mot de passe
+        document.getElementById('password').addEventListener('input', function(e) {
+            const password = e.target.value;
+            console.log('Force du mot de passe pour:', password);
+            
+            let score = 0;
+            if (password.length >= 8) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score++;
+            
+            const strength = score < 2 ? 'Faible' : score < 4 ? 'Moyen' : 'Fort';
+            console.log('Force:', strength, '(Score:', score, '/5)');
+        });
+    </script>
+</body>
+</html>

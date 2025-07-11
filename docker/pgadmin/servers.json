@@ -1,0 +1,18 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "LireLibre Database",
+      "Group": "Servers",
+      "Host": "database",
+      "Port": 5432,
+      "MaintenanceDB": "lirelibre",
+      "Username": "lirelibre",
+      "Password": "lirelibre_password",
+      "SSLMode": "prefer",
+      "Timeout": 10,
+      "UseSSHTunnel": 0,
+      "TunnelPort": "22",
+      "TunnelAuthentication": 0
+    }
+  }
+}

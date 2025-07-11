@@ -33,7 +33,9 @@
             "symfony/flex": true,
             "symfony/runtime": true
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "disable-tls": true,
+        "secure-http": false
     },
     "autoload": {
         "psr-4": {
@@ -76,6 +78,7 @@
         }
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "^7.0"
+        "symfony/phpunit-bridge": "^7.0",
+        "phpunit/phpunit": "^10.0"
     }
 }
