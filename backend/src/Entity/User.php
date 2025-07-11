@@ -26,7 +26,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
     #[Assert\NotBlank(message: 'L\'email est obligatoire.')]
-    #[Assert\Email(message: 'Veuillez entrer un email valide.')]
+    #[Assert\Email(message: 'L\'email n\'est pas valide.')]
     #[Assert\Length(max: 180, maxMessage: 'L\'email ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $email = null;
 
@@ -34,8 +34,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read', 'user:write', 'story:read'])]
     #[Assert\NotBlank(message: 'Le nom d\'utilisateur est obligatoire.')]
     #[Assert\Length(
-        min: 3,
-        max: 20,
+        min: 3, 
+        max: 20, 
         minMessage: 'Le nom d\'utilisateur doit contenir au moins {{ limit }} caractères.',
         maxMessage: 'Le nom d\'utilisateur ne peut pas dépasser {{ limit }} caractères.'
     )]

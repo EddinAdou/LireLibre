@@ -31,83 +31,79 @@ class AuthController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
+        // Validation des données d'entrée
         if (!$data || !isset($data['email'], $data['username'], $data['password'])) {
             return new JsonResponse([
-                'error' => 'Missing required fields: email, username, password'
+                'error' => 'Champs obligatoires manquants : email, username, password'
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        // Check if user already exists
-        $existingUser = $this->entityManager->getRepository(User::class)
-            ->findOneBy(['email' => $data['email']]);
-        
-        if ($existingUser) {
+        // Validation basique du mot de passe côté serveur
+        if (strlen($data['password']) < 8) {
             return new JsonResponse([
-                'error' => 'User with this email already exists'
-            ], Response::HTTP_CONFLICT);
+                'error' => 'Le mot de passe doit contenir au moins 8 caractères'
+            ], Response::HTTP_BAD_REQUEST);
         }
 
-        $existingUsername = $this->entityManager->getRepository(User::class)
-            ->findOneBy(['username' => $data['username']]);
-        
-        if ($existingUsername) {
-            return new JsonResponse([
-                'error' => 'Username already taken'
-            ], Response::HTTP_CONFLICT);
-        }
-
-        // Create new user
+        // Création de l'utilisateur
         $user = new User();
-        $user->setEmail($data['email']);
-        $user->setUsername($data['username']);
+        $user->setEmail(trim($data['email']));
+        $user->setUsername(trim($data['username']));
         $user->setRoles(['ROLE_USER']);
         
-        // Set optional fields
-        if (isset($data['firstName'])) {
-            $user->setFirstName($data['firstName']);
+        // Champs optionnels
+        if (isset($data['firstName']) && !empty(trim($data['firstName']))) {
+            $user->setFirstName(trim($data['firstName']));
         }
-        if (isset($data['lastName'])) {
-            $user->setLastName($data['lastName']);
+        if (isset($data['lastName']) && !empty(trim($data['lastName']))) {
+            $user->setLastName(trim($data['lastName']));
         }
         
-        // Hash password
+        // Hash du mot de passe
         $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
 
-        // Validate user
+        // Validation avec Symfony Validator
         $errors = $this->validator->validate($user);
         if (count($errors) > 0) {
             $errorMessages = [];
             foreach ($errors as $error) {
-                $errorMessages[] = $error->getMessage();
+                $errorMessages[$error->getPropertyPath()] = $error->getMessage();
             }
             return new JsonResponse([
-                'error' => 'Validation failed',
+                'error' => 'Erreurs de validation',
                 'details' => $errorMessages
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        // Save user
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
+        try {
+            // Sauvegarde en base
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
 
-        // Generate JWT token
-        $token = $this->jwtManager->create($user);
+            // Génération du token JWT
+            $token = $this->jwtManager->create($user);
 
-        return new JsonResponse([
-            'message' => 'User registered successfully',
-            'user' => [
-                'id' => $user->getId(),
-                'email' => $user->getEmail(),
-                'username' => $user->getUsername(),
-                'firstName' => $user->getFirstName(),
-                'lastName' => $user->getLastName(),
-                'roles' => $user->getRoles(),
-                'createdAt' => $user->getCreatedAt()->format('c'),
-                'updatedAt' => $user->getUpdatedAt()->format('c')
-            ],
-            'token' => $token
-        ], Response::HTTP_CREATED);
+            return new JsonResponse([
+                'message' => 'Inscription réussie ! Bienvenue sur LireLibre !',
+                'user' => [
+                    'id' => $user->getId(),
+                    'email' => $user->getEmail(),
+                    'username' => $user->getUsername(),
+                    'firstName' => $user->getFirstName(),
+                    'lastName' => $user->getLastName(),
+                    'roles' => $user->getRoles(),
+                    'createdAt' => $user->getCreatedAt()->format('c'),
+                    'updatedAt' => $user->getUpdatedAt()->format('c')
+                ],
+                'token' => $token
+            ], Response::HTTP_CREATED);
+
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Erreur lors de l\'inscription. Veuillez réessayer.'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route('/login', name: 'auth_login', methods: ['POST'])]
