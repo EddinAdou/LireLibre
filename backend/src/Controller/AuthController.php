@@ -158,6 +158,69 @@ class AuthController extends AbstractController
         ]);
     }
 
+    #[Route('/refresh', name: 'auth_refresh', methods: ['POST'])]
+    public function refreshToken(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        // Vérifier la présence du refresh token
+        if (!$data || !isset($data['refresh_token'])) {
+            return new JsonResponse([
+                'error' => 'Refresh token manquant'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $refreshToken = $data['refresh_token'];
+
+        try {
+            // Décoder le refresh token pour récupérer l'utilisateur
+            $payload = $this->jwtManager->parse($refreshToken);
+            
+            if (!isset($payload['username'])) {
+                return new JsonResponse([
+                    'error' => 'Refresh token invalide'
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
+            // Récupérer l'utilisateur
+            $user = $this->entityManager->getRepository(User::class)->findOneBy([
+                'username' => $payload['username']
+            ]);
+
+            if (!$user) {
+                return new JsonResponse([
+                    'error' => 'Utilisateur non trouvé'
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
+            // Générer un nouveau token d'accès
+            $newToken = $this->jwtManager->create($user);
+
+            // Optionnel: Générer aussi un nouveau refresh token pour rotation
+            $newRefreshToken = $this->jwtManager->create($user);
+
+            return new JsonResponse([
+                'message' => 'Token rafraîchi avec succès',
+                'token' => $newToken,
+                'refresh_token' => $newRefreshToken,
+                'user' => [
+                    'id' => $user->getId(),
+                    'email' => $user->getEmail(),
+                    'username' => $user->getUsername(),
+                    'firstName' => $user->getFirstName(),
+                    'lastName' => $user->getLastName(),
+                    'birthDate' => $user->getBirthDate()?->format('d/m/Y'),
+                    'avatar' => $user->getAvatar()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Refresh token invalide ou expiré: ' . $e->getMessage()
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+    }
+
     #[Route('/me', name: 'auth_me', methods: ['GET'])]
     public function me(): JsonResponse
     {
