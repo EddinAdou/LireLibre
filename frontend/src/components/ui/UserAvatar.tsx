@@ -1,6 +1,6 @@
 import React from 'react';
 import { User } from 'lucide-react';
-import { UPLOAD_BASE_URL } from '../../config';
+import { UPLOAD_BASE_URL } from '../../config.ts';
 
 interface UserAvatarProps {
   user?: {

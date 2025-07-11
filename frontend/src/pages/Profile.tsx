@@ -4,7 +4,7 @@ import { User, Mail, Calendar, MapPin, Edit, Save, X, Settings, Shield, Bell } f
 import AvatarUpload from '../components/ui/AvatarUpload';
 import FormField from '../components/ui/FormField';
 import { ProfileService, ProfileData } from '../services/profileService';
-import { UPLOAD_BASE_URL } from '../config';
+import { UPLOAD_BASE_URL } from '../config.ts';
 
 interface UserProfile {
   username: string;
