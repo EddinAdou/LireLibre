@@ -93,6 +93,8 @@ jobs:
             echo "Removing outdated composer.lock file..."
             rm composer.lock
           fi
+          # Create minimal .env file for CI
+          cp .env.example .env
           composer install --prefer-dist --no-progress --no-interaction
 
       - name: 🎨 Check backend code standards
