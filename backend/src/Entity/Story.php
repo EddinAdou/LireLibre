@@ -21,6 +21,10 @@ class Story
     #[Groups(['story:read', 'story:write', 'user:read'])]
     private ?string $title = null;
 
+    #[ORM\Column(type: 'string', length: 255, unique: true)]
+    #[Groups(['story:read', 'user:read'])]
+    private ?string $slug = null;
+
     #[ORM\Column(type: 'text')]
     #[Groups(['story:read', 'story:write'])]
     private ?string $content = null;
@@ -36,6 +40,10 @@ class Story
     #[ORM\Column(type: 'string', nullable: true)]
     #[Groups(['story:read', 'story:write', 'user:read'])]
     private ?string $coverImage = null;
+
+    #[ORM\Column(type: 'string', length: 20)]
+    #[Groups(['story:read', 'story:write'])]
+    private string $status = 'draft';
 
     #[ORM\Column(type: 'boolean')]
     #[Groups(['story:read', 'story:write'])]
@@ -292,6 +300,28 @@ class Story
             }
         }
 
+        return $this;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): static
+    {
+        $this->slug = $slug;
+        return $this;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): static
+    {
+        $this->status = $status;
         return $this;
     }
 }
