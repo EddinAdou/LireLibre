@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, PenTool, LogOut, Menu, X, Users, Mail } from 'lucide-react';
+import { BookOpen, PenTool, LogOut, Menu, Users, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import UserAvatar from './ui/UserAvatar';
 import LiveStats from './ui/LiveStats';
@@ -17,9 +17,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white/95 backdrop-blur-sm shadow-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -31,17 +31,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
+            <nav className="hidden md:flex items-center space-x-2">
               <Link
                 to="/stories"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-600 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-blue-50 hover:scale-105"
               >
-                Histoires
+                📚 Histoires
               </Link>
               {isAuthenticated && (
                 <Link
                   to="/write"
-                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-purple-50 hover:scale-105"
                 >
                   <PenTool className="h-4 w-4" />
                   <span>Écrire</span>
@@ -75,18 +75,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
                   <Link
                     to="/login"
-                    className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                    className="text-gray-600 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-blue-50"
                   >
-                    Connexion
+                    🔑 Connexion
                   </Link>
                   <Link
                     to="/register"
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition-all duration-200 transform hover:scale-105"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 px-6 py-2 rounded-xl text-sm font-medium shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-xl"
                   >
-                    Inscription
+                    ✨ Inscription
                   </Link>
                 </div>
               )}
@@ -96,9 +96,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-gray-900 p-2 rounded-lg transition-all duration-200 hover:bg-gray-100"
               >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                <Menu className={`h-6 w-6 transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-90' : 'rotate-0'}`} />
               </button>
             </div>
           </div>
