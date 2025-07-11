@@ -88,6 +88,11 @@ jobs:
       - name: 📦 Install backend dependencies
         run: |
           cd backend
+          # Remove outdated lock file and reinstall dependencies
+          if [ -f "composer.lock" ]; then
+            echo "Removing outdated composer.lock file..."
+            rm composer.lock
+          fi
           composer install --prefer-dist --no-progress --no-interaction
 
       - name: 🎨 Check backend code standards
