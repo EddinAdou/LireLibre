@@ -129,7 +129,25 @@ class StoryController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $data = json_decode($request->getContent(), true);
+        // Handle both JSON and FormData
+        $contentType = $request->headers->get('Content-Type', '');
+        
+        if (str_contains($contentType, 'application/json')) {
+            $data = json_decode($request->getContent(), true);
+        } else {
+            // Handle FormData from frontend
+            $data = [
+                'title' => $request->get('title'),
+                'description' => $request->get('description'),
+                'content' => $request->get('content'),
+                'category' => $request->get('category'),
+                'tags' => $request->get('tags'),
+                'isPublished' => $request->get('isPublished'),
+            ];
+            
+            // Handle coverImage file upload
+            $coverImageFile = $request->files->get('coverImage');
+        }
 
         if (!$data || !isset($data['title'], $data['content'])) {
             return new JsonResponse([
@@ -142,16 +160,40 @@ class StoryController extends AbstractController
         $story->setContent($data['content']);
         $story->setAuthor($user);
         
+        // Set description/summary
+        if (isset($data['description'])) {
+            $story->setSummary($data['description']);
+        }
+        
+        // Set category/genre
+        if (isset($data['category'])) {
+            $story->setGenre($data['category']);
+        }
+        
+        // Set tags
+        if (isset($data['tags'])) {
+            $tags = is_string($data['tags']) ? json_decode($data['tags'], true) : $data['tags'];
+            $story->setTags($tags ?: []);
+        }
+        
         // Generate slug from title
         $slug = $this->slugger->slug($data['title'])->lower();
         $story->setSlug($slug);
         
-        // Set status (default to draft)
-        $status = $data['status'] ?? 'draft';
-        if (!in_array($status, ['draft', 'published', 'archived'])) {
-            $status = 'draft';
+        // Set publication status
+        $isPublished = $data['isPublished'] ?? false;
+        if (is_string($isPublished)) {
+            $isPublished = $isPublished === 'true';
         }
-        $story->setStatus($status);
+        $story->setIsPublished($isPublished);
+        $story->setStatus($isPublished ? 'published' : 'draft');
+
+        // Handle cover image upload if provided
+        if (isset($coverImageFile) && $coverImageFile) {
+            // Here you would handle file upload logic
+            // For now, we'll just store the filename
+            $story->setCoverImage($coverImageFile->getClientOriginalName());
+        }
 
         // Validate story
         $errors = $this->validator->validate($story);
@@ -205,7 +247,25 @@ class StoryController extends AbstractController
             ], Response::HTTP_FORBIDDEN);
         }
 
-        $data = json_decode($request->getContent(), true);
+        // Handle both JSON and FormData
+        $contentType = $request->headers->get('Content-Type', '');
+        
+        if (str_contains($contentType, 'application/json')) {
+            $data = json_decode($request->getContent(), true);
+        } else {
+            // Handle FormData from frontend
+            $data = [
+                'title' => $request->get('title'),
+                'description' => $request->get('description'),
+                'content' => $request->get('content'),
+                'category' => $request->get('category'),
+                'tags' => $request->get('tags'),
+                'isPublished' => $request->get('isPublished'),
+            ];
+            
+            // Handle coverImage file upload
+            $coverImageFile = $request->files->get('coverImage');
+        }
 
         if (isset($data['title'])) {
             $story->setTitle($data['title']);
@@ -215,6 +275,33 @@ class StoryController extends AbstractController
 
         if (isset($data['content'])) {
             $story->setContent($data['content']);
+        }
+
+        if (isset($data['description'])) {
+            $story->setSummary($data['description']);
+        }
+
+        if (isset($data['category'])) {
+            $story->setGenre($data['category']);
+        }
+
+        if (isset($data['tags'])) {
+            $tags = is_string($data['tags']) ? json_decode($data['tags'], true) : $data['tags'];
+            $story->setTags($tags ?: []);
+        }
+
+        if (isset($data['isPublished'])) {
+            $isPublished = $data['isPublished'];
+            if (is_string($isPublished)) {
+                $isPublished = $isPublished === 'true';
+            }
+            $story->setIsPublished($isPublished);
+            $story->setStatus($isPublished ? 'published' : 'draft');
+        }
+
+        // Handle cover image upload if provided
+        if (isset($coverImageFile) && $coverImageFile) {
+            $story->setCoverImage($coverImageFile->getClientOriginalName());
         }
 
         if (isset($data['status']) && in_array($data['status'], ['draft', 'published', 'archived'])) {
@@ -278,5 +365,143 @@ class StoryController extends AbstractController
         return new JsonResponse([
             'message' => 'Story deleted successfully'
         ]);
+    }
+
+    #[Route('/{id}/like', name: 'story_like', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function toggleLike(int $id): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'error' => 'Authentication required'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $story = $this->entityManager->getRepository(Story::class)->find($id);
+        if (!$story) {
+            return new JsonResponse([
+                'error' => 'Story not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        // For simplicity, we'll just increment/decrement like count
+        // In a real app, you'd track user likes in a separate table
+        $story->incrementLikeCount();
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'liked' => true,
+            'likes' => $story->getLikeCount(),
+            'message' => 'Story liked successfully'
+        ]);
+    }
+
+    #[Route('/{id}/view', name: 'story_view', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function incrementViews(int $id): JsonResponse
+    {
+        $story = $this->entityManager->getRepository(Story::class)->find($id);
+        if (!$story) {
+            return new JsonResponse([
+                'error' => 'Story not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $story->incrementViewCount();
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'message' => 'View count incremented',
+            'views' => $story->getViewCount()
+        ]);
+    }
+
+    #[Route('/{id}/stats', name: 'story_stats', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function getStoryStats(int $id): JsonResponse
+    {
+        $story = $this->entityManager->getRepository(Story::class)->find($id);
+        if (!$story) {
+            return new JsonResponse([
+                'error' => 'Story not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        // Calculate reading time (approximate)
+        $wordCount = str_word_count(strip_tags($story->getContent()));
+        $readingTime = ceil($wordCount / 200); // 200 words per minute
+
+        $stats = [
+            'views' => $story->getViewCount(),
+            'likes' => $story->getLikeCount(),
+            'comments' => $story->getComments()->count(),
+            'readingTime' => $readingTime,
+            'chapters' => 1 // For now, assuming single chapter stories
+        ];
+
+        return new JsonResponse([
+            'stats' => $stats
+        ]);
+    }
+
+    #[Route('/{id}/chapters', name: 'story_chapters', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function getChapters(int $id): JsonResponse
+    {
+        $story = $this->entityManager->getRepository(Story::class)->find($id);
+        if (!$story) {
+            return new JsonResponse([
+                'error' => 'Story not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        // For now, return the story content as a single chapter
+        // In the future, you could add a Chapter entity
+        $chapters = [
+            [
+                'id' => 1,
+                'title' => $story->getTitle(),
+                'content' => $story->getContent(),
+                'chapterNumber' => 1,
+                'createdAt' => $story->getCreatedAt()->format('c'),
+                'updatedAt' => $story->getUpdatedAt()->format('c')
+            ]
+        ];
+
+        return new JsonResponse([
+            'chapters' => $chapters
+        ]);
+    }
+
+    #[Route('/{id}/chapters', name: 'story_create_chapter', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function createChapter(int $id, Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'error' => 'Authentication required'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $story = $this->entityManager->getRepository(Story::class)->find($id);
+        if (!$story) {
+            return new JsonResponse([
+                'error' => 'Story not found'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($story->getAuthor()->getId() !== $user->getId()) {
+            return new JsonResponse([
+                'error' => 'Access denied'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        // For now, just return success - Chapter functionality would need Chapter entity
+        return new JsonResponse([
+            'message' => 'Chapter functionality not fully implemented yet',
+            'chapter' => [
+                'id' => 2,
+                'title' => 'New Chapter',
+                'content' => '',
+                'chapterNumber' => 2
+            ]
+        ], Response::HTTP_CREATED);
     }
 }

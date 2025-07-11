@@ -35,7 +35,7 @@ final class Version20250711153521 extends AbstractMigration
         $this->addSql('ALTER INDEX idx_comments_story_id RENAME TO IDX_5F9E962AAA5D4036');
         $this->addSql('ALTER TABLE favorites DROP CONSTRAINT fk_favorites_story');
         $this->addSql('ALTER TABLE favorites DROP CONSTRAINT fk_favorites_user');
-        $this->addSql('DROP INDEX favorites_user_id_story_id_key');
+        $this->addSql('ALTER TABLE favorites DROP CONSTRAINT IF EXISTS favorites_user_id_story_id_key');
         $this->addSql('ALTER TABLE favorites ALTER created_at TYPE TIMESTAMP(0) WITHOUT TIME ZONE');
         $this->addSql('COMMENT ON COLUMN favorites.created_at IS \'(DC2Type:datetime_immutable)\'');
         $this->addSql('ALTER TABLE favorites ADD CONSTRAINT FK_E46960F5A76ED395 FOREIGN KEY (user_id) REFERENCES users (id) NOT DEFERRABLE INITIALLY IMMEDIATE');

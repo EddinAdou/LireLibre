@@ -27,4 +27,8 @@ security:
     access_control:
         - { path: ^/api/auth/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/categories, roles: PUBLIC_ACCESS }
+        - { path: ^/api/tags, roles: PUBLIC_ACCESS }
+        - { path: ^/api/stories$, methods: [GET], roles: PUBLIC_ACCESS }
+        - { path: ^/api/stories/\d+$, methods: [GET], roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
