@@ -143,7 +143,16 @@ class AuthController extends AbstractController
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
                 'username' => $user->getUsername(),
-                'roles' => $user->getRoles()
+                'firstName' => $user->getFirstName(),
+                'lastName' => $user->getLastName(),
+                'avatar' => $user->getAvatar(),
+                'bio' => $user->getBio(),
+                'location' => $user->getLocation(),
+                'website' => $user->getWebsite(),
+                'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
+                'roles' => $user->getRoles(),
+                'createdAt' => $user->getCreatedAt()->format('c'),
+                'updatedAt' => $user->getUpdatedAt()->format('c')
             ],
             'token' => $token
         ]);
@@ -165,6 +174,13 @@ class AuthController extends AbstractController
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
                 'username' => $user->getUsername(),
+                'firstName' => $user->getFirstName(),
+                'lastName' => $user->getLastName(),
+                'avatar' => $user->getAvatar(),
+                'bio' => $user->getBio(),
+                'location' => $user->getLocation(),
+                'website' => $user->getWebsite(),
+                'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
                 'roles' => $user->getRoles(),
                 'createdAt' => $user->getCreatedAt()->format('c'),
                 'updatedAt' => $user->getUpdatedAt()->format('c')

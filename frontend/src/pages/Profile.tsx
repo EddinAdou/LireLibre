@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { User, Mail, Calendar, MapPin, Edit, Save, X, Settings, Shield, Bell } from 'lucide-react';
 import AvatarUpload from '../components/ui/AvatarUpload';
 import FormField from '../components/ui/FormField';
+import { ProfileService, ProfileData } from '../services/profileService';
+import { UPLOAD_BASE_URL } from '../config';
 
 interface UserProfile {
   username: string;
@@ -17,55 +19,68 @@ interface UserProfile {
 }
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   
   const [profile, setProfile] = useState<UserProfile>({
-    username: user?.username || '',
-    email: user?.email || '',
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
+    username: '',
+    email: '',
+    firstName: '',
+    lastName: '',
     bio: '',
     location: '',
     website: '',
     birthDate: '',
-    avatar: user?.avatar
+    avatar: undefined
   });
 
   const [originalProfile, setOriginalProfile] = useState<UserProfile>(profile);
   const [errors, setErrors] = useState<Partial<UserProfile>>({});
 
   useEffect(() => {
-    // Simuler le chargement des données utilisateur
     const loadUserProfile = async () => {
-      setIsLoading(true);
-      // Ici vous appelleriez votre API pour récupérer les données complètes
-      setTimeout(() => {
-        const userData = {
-          username: user?.username || '',
-          email: user?.email || 'user@example.com',
-          firstName: user?.firstName || '',
-          lastName: user?.lastName || '',
-          bio: 'Passionné de lecture et d\'écriture, j\'aime partager mes histoires.',
-          location: 'France',
-          website: '',
-          birthDate: '1990-01-01',
-          avatar: user?.avatar
+      try {
+        setLoadingProfile(true);
+        const profileData = await ProfileService.getProfile();
+        
+        const userData: UserProfile = {
+          username: profileData.username || '',
+          email: profileData.email || '',
+          firstName: profileData.firstName || '',
+          lastName: profileData.lastName || '',
+          bio: profileData.bio || '',
+          location: profileData.location || '',
+          website: profileData.website || '',
+          birthDate: profileData.birthDate || '',
+          avatar: profileData.avatar
         };
+        
         setProfile(userData);
         setOriginalProfile(userData);
-        setIsLoading(false);
-      }, 1000);
+      } catch (error) {
+        console.error('Erreur lors du chargement du profil:', error);
+        setMessage({
+          type: 'error',
+          text: 'Erreur lors du chargement du profil'
+        });
+      } finally {
+        setLoadingProfile(false);
+      }
     };
 
-    loadUserProfile();
+    if (user) {
+      loadUserProfile();
+    }
   }, [user]);
 
   const handleSave = async () => {
     setErrors({});
+    setMessage(null);
     
     // Validation simple
     const newErrors: Partial<UserProfile> = {};
@@ -79,13 +94,61 @@ const Profile: React.FC = () => {
 
     setIsLoading(true);
     
-    // Simuler la sauvegarde
-    setTimeout(() => {
-      setOriginalProfile(profile);
+    try {
+      const updatedProfile = await ProfileService.updateProfile({
+        username: profile.username,
+        email: profile.email,
+        firstName: profile.firstName || undefined,
+        lastName: profile.lastName || undefined,
+        bio: profile.bio || undefined,
+        location: profile.location || undefined,
+        website: profile.website || undefined,
+        birthDate: profile.birthDate || undefined
+      });
+
+      // Mettre à jour l'état local
+      const newProfileData = {
+        ...profile,
+        username: updatedProfile.username,
+        email: updatedProfile.email,
+        firstName: updatedProfile.firstName || '',
+        lastName: updatedProfile.lastName || '',
+        bio: updatedProfile.bio || '',
+        location: updatedProfile.location || '',
+        website: updatedProfile.website || '',
+        birthDate: updatedProfile.birthDate || '',
+        avatar: updatedProfile.avatar
+      };
+
+      setProfile(newProfileData);
+      setOriginalProfile(newProfileData);
+      
+      // Mettre à jour le contexte d'authentification
+      if (user) {
+        updateUser({
+          ...user,
+          username: updatedProfile.username,
+          email: updatedProfile.email,
+          firstName: updatedProfile.firstName,
+          lastName: updatedProfile.lastName,
+          avatar: updatedProfile.avatar
+        });
+      }
+
       setIsEditing(false);
+      setMessage({
+        type: 'success',
+        text: 'Profil mis à jour avec succès !'
+      });
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Erreur lors de la sauvegarde'
+      });
+    } finally {
       setIsLoading(false);
-      // Ici vous appelleriez votre API pour sauvegarder
-    }, 1500);
+    }
   };
 
   const handleCancel = () => {
@@ -94,19 +157,69 @@ const Profile: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleAvatarChange = (file: File) => {
+  const handleAvatarChange = async (file: File) => {
     setIsAvatarUploading(true);
+    setMessage(null);
     
-    // Simuler l'upload
-    setTimeout(() => {
-      const imageUrl = URL.createObjectURL(file);
-      setProfile(prev => ({ ...prev, avatar: imageUrl }));
+    try {
+      const avatarUrl = await ProfileService.uploadAvatar(file);
+      
+      // Mettre à jour le profil local
+      const updatedProfile = { ...profile, avatar: avatarUrl };
+      setProfile(updatedProfile);
+      setOriginalProfile(updatedProfile);
+      
+      // Mettre à jour le contexte d'authentification
+      if (user) {
+        updateUser({
+          ...user,
+          avatar: avatarUrl
+        });
+      }
+      
+      setMessage({
+        type: 'success',
+        text: 'Avatar mis à jour avec succès !'
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'upload:', error);
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Erreur lors de l\'upload de l\'avatar'
+      });
+    } finally {
       setIsAvatarUploading(false);
-    }, 2000);
+    }
   };
 
-  const handleAvatarRemove = () => {
-    setProfile(prev => ({ ...prev, avatar: undefined }));
+  const handleAvatarRemove = async () => {
+    try {
+      await ProfileService.removeAvatar();
+      
+      // Mettre à jour le profil local
+      const updatedProfile = { ...profile, avatar: undefined };
+      setProfile(updatedProfile);
+      setOriginalProfile(updatedProfile);
+      
+      // Mettre à jour le contexte d'authentification
+      if (user) {
+        updateUser({
+          ...user,
+          avatar: undefined
+        });
+      }
+      
+      setMessage({
+        type: 'success',
+        text: 'Avatar supprimé avec succès !'
+      });
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      setMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Erreur lors de la suppression de l\'avatar'
+      });
+    }
   };
 
   const tabs = [
@@ -116,7 +229,7 @@ const Profile: React.FC = () => {
     { id: 'notifications', label: 'Notifications', icon: Bell }
   ];
 
-  if (isLoading && !profile.username) {
+  if (loadingProfile) {
     return (
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-center min-h-96">
@@ -137,6 +250,17 @@ const Profile: React.FC = () => {
           Gérez vos informations personnelles et vos préférences
         </p>
       </div>
+
+      {/* Messages */}
+      {message && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          message.type === 'success' 
+            ? 'bg-green-50 text-green-800 border border-green-200' 
+            : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          {message.text}
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar */}

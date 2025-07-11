@@ -1,5 +1,6 @@
 import React from 'react';
 import { User } from 'lucide-react';
+import { UPLOAD_BASE_URL } from '../../config';
 
 interface UserAvatarProps {
   user?: {
@@ -30,9 +31,10 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ user, size = 'md', className = 
   };
 
   if (user?.avatar) {
+    const avatarUrl = user.avatar.startsWith('http') ? user.avatar : `${UPLOAD_BASE_URL}${user.avatar}`;
     return (
       <img
-        src={user.avatar}
+        src={avatarUrl}
         alt={user.username || 'Avatar utilisateur'}
         className={`${sizeClasses[size]} rounded-full object-cover border-2 border-white shadow-sm ${className}`}
       />
