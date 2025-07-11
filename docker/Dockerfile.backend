@@ -1,0 +1,53 @@
+# Dockerfile pour le backend Symfony
+FROM php:8.3-fpm-alpine
+
+# Installer les dépendances système
+RUN apk add --no-cache \
+    git \
+    zip \
+    unzip \
+    libpq-dev \
+    icu-dev \
+    libzip-dev \
+    oniguruma-dev
+
+# Installer les extensions PHP
+RUN docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    pdo_pgsql \
+    intl \
+    zip \
+    mbstring \
+    opcache
+
+# Installer Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Configuration optimisée pour la production
+RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini
+
+WORKDIR /var/www/html
+
+# Copier les fichiers de dépendances
+COPY backend/composer*.json ./
+
+# Installer les dépendances PHP
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Copier le code source
+COPY backend/ .
+
+# Optimiser l'autoloader
+RUN composer dump-autoload --optimize
+
+# Changer les permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
+
+EXPOSE 9000
+
+CMD ["php-fpm"]
