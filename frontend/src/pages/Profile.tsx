@@ -18,6 +18,59 @@ interface UserProfile {
   avatar?: string;
 }
 
+// Utility functions for date conversion
+const formatDateForDisplay = (isoDate: string | null): string => {
+  if (!isoDate) return '';
+  try {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch {
+    return '';
+  }
+};
+
+const formatDateForAPI = (frenchDate: string): string | null => {
+  if (!frenchDate) return null;
+  
+  // Support both dd/mm/yyyy and dd/mm/yy formats
+  const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/;
+  const match = frenchDate.match(dateRegex);
+  
+  if (!match) return null;
+  
+  let [, day, month, year] = match;
+  
+  // Convert 2-digit year to 4-digit
+  if (year.length === 2) {
+    const currentYear = new Date().getFullYear();
+    const currentCentury = Math.floor(currentYear / 100);
+    const yearNum = parseInt(year);
+    
+    // If year is greater than current year's last 2 digits, assume previous century
+    if (yearNum > currentYear % 100) {
+      year = `${currentCentury - 1}${year}`;
+    } else {
+      year = `${currentCentury}${year}`;
+    }
+  }
+  
+  // Validate date
+  const dayNum = parseInt(day);
+  const monthNum = parseInt(month);
+  const yearNum = parseInt(year);
+  
+  if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12 || yearNum < 1900 || yearNum > 2100) {
+    return null;
+  }
+  
+  // Create ISO date string (YYYY-MM-DD)
+  return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};
+
 const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -45,8 +98,10 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
+        console.log('Loading user profile...', { user });
         setLoadingProfile(true);
         const profileData = await ProfileService.getProfile();
+        console.log('Profile data received:', profileData);
         
         const userData: UserProfile = {
           username: profileData.username || '',
@@ -56,25 +111,31 @@ const Profile: React.FC = () => {
           bio: profileData.bio || '',
           location: profileData.location || '',
           website: profileData.website || '',
-          birthDate: profileData.birthDate || '',
+          birthDate: formatDateForDisplay(profileData.birthDate || null) || '',
           avatar: profileData.avatar
         };
         
         setProfile(userData);
         setOriginalProfile(userData);
+        console.log('Profile loaded successfully');
       } catch (error) {
         console.error('Erreur lors du chargement du profil:', error);
         setMessage({
           type: 'error',
-          text: 'Erreur lors du chargement du profil'
+          text: 'Erreur lors du chargement du profil: ' + (error instanceof Error ? error.message : 'Erreur inconnue')
         });
       } finally {
+        console.log('Setting loadingProfile to false');
         setLoadingProfile(false);
       }
     };
 
+    console.log('Profile useEffect triggered', { user, loadingProfile });
     if (user) {
       loadUserProfile();
+    } else {
+      console.log('No user found, setting loadingProfile to false');
+      setLoadingProfile(false);
     }
   }, [user]);
 
@@ -87,6 +148,11 @@ const Profile: React.FC = () => {
     if (!profile.username.trim()) newErrors.username = 'Le nom d\'utilisateur est requis';
     if (!profile.email.trim()) newErrors.email = 'L\'email est requis';
     
+    // Validate birth date format if provided
+    if (profile.birthDate && !formatDateForAPI(profile.birthDate)) {
+      newErrors.birthDate = 'Format de date invalide. Utilisez jj/mm/aaaa';
+    }
+    
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -95,6 +161,9 @@ const Profile: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // Convert French date to ISO format for API
+      const apiDateFormat = profile.birthDate ? formatDateForAPI(profile.birthDate) : undefined;
+      
       const updatedProfile = await ProfileService.updateProfile({
         username: profile.username,
         email: profile.email,
@@ -103,10 +172,10 @@ const Profile: React.FC = () => {
         bio: profile.bio || undefined,
         location: profile.location || undefined,
         website: profile.website || undefined,
-        birthDate: profile.birthDate || undefined
+        birthDate: apiDateFormat || undefined
       });
 
-      // Mettre à jour l'état local
+      // Mettre à jour l'état local avec la date reconvertie en format français
       const newProfileData = {
         ...profile,
         username: updatedProfile.username,
@@ -116,7 +185,7 @@ const Profile: React.FC = () => {
         bio: updatedProfile.bio || '',
         location: updatedProfile.location || '',
         website: updatedProfile.website || '',
-        birthDate: updatedProfile.birthDate || '',
+        birthDate: formatDateForDisplay(updatedProfile.birthDate || null) || '',
         avatar: updatedProfile.avatar
       };
 
@@ -162,10 +231,21 @@ const Profile: React.FC = () => {
     setMessage(null);
     
     try {
-      const avatarUrl = await ProfileService.uploadAvatar(file);
+      const updatedUserData = await ProfileService.uploadAvatar(file);
       
-      // Mettre à jour le profil local
-      const updatedProfile = { ...profile, avatar: avatarUrl };
+      // Convertir les données pour l'affichage avec date française
+      const updatedProfile = {
+        username: updatedUserData.username || '',
+        email: updatedUserData.email || '',
+        firstName: updatedUserData.firstName || '',
+        lastName: updatedUserData.lastName || '',
+        bio: updatedUserData.bio || '',
+        location: updatedUserData.location || '',
+        website: updatedUserData.website || '',
+        birthDate: formatDateForDisplay(updatedUserData.birthDate || null) || '',
+        avatar: updatedUserData.avatar
+      };
+      
       setProfile(updatedProfile);
       setOriginalProfile(updatedProfile);
       
@@ -173,7 +253,7 @@ const Profile: React.FC = () => {
       if (user) {
         updateUser({
           ...user,
-          avatar: avatarUrl
+          avatar: updatedUserData.avatar
         });
       }
       
@@ -194,10 +274,21 @@ const Profile: React.FC = () => {
 
   const handleAvatarRemove = async () => {
     try {
-      await ProfileService.removeAvatar();
+      const updatedUserData = await ProfileService.removeAvatar();
       
-      // Mettre à jour le profil local
-      const updatedProfile = { ...profile, avatar: undefined };
+      // Convertir les données pour l'affichage avec date française
+      const updatedProfile = {
+        username: updatedUserData.username || '',
+        email: updatedUserData.email || '',
+        firstName: updatedUserData.firstName || '',
+        lastName: updatedUserData.lastName || '',
+        bio: updatedUserData.bio || '',
+        location: updatedUserData.location || '',
+        website: updatedUserData.website || '',
+        birthDate: formatDateForDisplay(updatedUserData.birthDate || null) || '',
+        avatar: updatedUserData.avatar
+      };
+      
       setProfile(updatedProfile);
       setOriginalProfile(updatedProfile);
       
@@ -205,7 +296,7 @@ const Profile: React.FC = () => {
       if (user) {
         updateUser({
           ...user,
-          avatar: undefined
+          avatar: updatedUserData.avatar
         });
       }
       
@@ -401,8 +492,9 @@ const Profile: React.FC = () => {
                     type="text"
                     value={profile.birthDate}
                     onChange={(value) => setProfile(prev => ({ ...prev, birthDate: value }))}
-                    placeholder="jj/mm/aaaa"
+                    placeholder="jj/mm/aaaa (ex: 15/03/1990)"
                     disabled={!isEditing}
+                    error={errors.birthDate}
                     icon={<Calendar className="h-5 w-5" />}
                   />
 
