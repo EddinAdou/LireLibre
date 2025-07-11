@@ -8,6 +8,7 @@ import StoryList from './pages/StoryList'
 import StoryDetail from './pages/StoryDetail'
 import WriteStory from './pages/WriteStory'
 import Profile from './pages/Profile'
+import FontDemo from './pages/FontDemo'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/stories/:id" element={<StoryDetail />} />
           <Route path="/write" element={<WriteStory />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/font-demo" element={<FontDemo />} />
         </Routes>
       </Layout>
     </AuthProvider>

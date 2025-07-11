@@ -1,0 +1,36 @@
+#!/bin/sh
+# Commit-msg hook pour vérifier les conventions de commit
+
+# Couleurs
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+commit_regex='^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .{1,50}'
+
+error_msg="❌ Message de commit invalide!
+
+Format requis:
+  <type>[optional scope]: <description>
+
+Types valides:
+  feat:     Nouvelle fonctionnalité
+  fix:      Correction de bug
+  docs:     Documentation
+  style:    Formatage, style
+  refactor: Refactoring
+  test:     Tests
+  chore:    Maintenance
+
+Exemples:
+  feat(auth): add JWT authentication
+  fix(stories): resolve pagination bug
+  docs: update API documentation"
+
+if ! grep -qE "$commit_regex" "$1"; then
+    echo "${RED}$error_msg${NC}" >&2
+    exit 1
+fi
+
+echo "${GREEN}✅ Message de commit valide${NC}"

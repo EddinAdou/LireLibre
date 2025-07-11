@@ -22,21 +22,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
               <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-gray-900">LireLibre</span>
+              <span className="text-2xl font-bold text-gray-900 font-manrope">LireLibre</span>
             </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               <Link
                 to="/stories"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium font-manrope"
               >
                 Histoires
+              </Link>
+              <Link
+                to="/font-demo"
+                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium font-manrope"
+              >
+                Démo Police
               </Link>
               {isAuthenticated && (
                 <Link
                   to="/write"
-                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium font-manrope"
                 >
                   <PenTool className="h-4 w-4" />
                   <span>Écrire</span>
