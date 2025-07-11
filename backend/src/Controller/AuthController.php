@@ -15,7 +15,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-#[Route('/api/auth')]
+#[Route('/auth')]
 class AuthController extends AbstractController
 {
     public function __construct(

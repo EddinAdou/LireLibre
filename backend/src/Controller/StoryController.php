@@ -14,7 +14,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
-#[Route('/api/stories')]
+#[Route('/stories')]
 class StoryController extends AbstractController
 {
     public function __construct(
