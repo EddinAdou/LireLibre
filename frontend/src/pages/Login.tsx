@@ -5,13 +5,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import { LoginCredentials } from '../types';
 import BookIcon from '../components/icons/BookIcon';
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+  rememberMe: z.boolean().optional(),
 });
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
   const { login, isLoading } = useAuth();
@@ -22,13 +24,17 @@ const Login: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginCredentials>({
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginCredentials) => {
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data);
+      await login({
+        email: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe || false
+      });
       toast.success('Connexion réussie !');
       navigate('/');
     } catch (error: any) {
@@ -136,8 +142,8 @@ const Login: React.FC = () => {
                 <div className="flex items-center">
                   <input
                     id="remember-me"
-                    name="remember-me"
                     type="checkbox"
+                    {...register('rememberMe')}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
