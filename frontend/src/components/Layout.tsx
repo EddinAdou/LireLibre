@@ -1,13 +1,15 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, PenTool, LogOut, Menu, Users, Mail } from 'lucide-react';
+import { BookOpen, PenTool, LogOut, Menu, Users, Mail, Search, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import UserAvatar from './ui/UserAvatar';
 import LiveStats from './ui/LiveStats';
 import ReadingAnimation from './ui/ReadingAnimation';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -17,15 +19,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'}`}>
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-sm shadow-sm border-b sticky top-0 z-50">
+      <header className={`backdrop-blur-sm shadow-sm border-b sticky top-0 z-50 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group">
-              <BookOpen className="h-8 w-8 text-primary group-hover:text-blue-600 transition-all duration-300 group-hover:scale-110" />
-              <span className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+              <BookOpen className={`h-8 w-8 transition-all duration-300 group-hover:scale-110 ${isDarkMode ? 'text-blue-400 group-hover:text-blue-300' : 'text-primary group-hover:text-blue-600'}`} />
+              <span className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-white group-hover:text-blue-300' : 'text-gray-900 group-hover:text-blue-600'}`}>
                 LireLibre
               </span>
             </Link>
@@ -33,15 +35,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-2">
               <Link
-                to="/stories"
-                className="text-gray-600 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-blue-50 hover:scale-105"
+                to="/search"
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 ${isDarkMode ? 'text-gray-300 hover:text-green-400 hover:bg-green-900/20' : 'text-gray-600 hover:text-green-600 hover:bg-green-50'}`}
               >
-                📚 Histoires
+                🔍 Rechercher
+              </Link>
+              <Link
+                to="/stories"
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 ${isDarkMode ? 'text-gray-300 hover:text-blue-400 hover:bg-blue-900/20' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}`}
+              >
+                📚 Mes Histoires
               </Link>
               {isAuthenticated && (
                 <Link
                   to="/write"
-                  className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-purple-50 hover:scale-105"
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105 ${isDarkMode ? 'text-gray-300 hover:text-purple-400 hover:bg-purple-900/20' : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'}`}
                 >
                   <PenTool className="h-4 w-4" />
                   <span>Écrire</span>
@@ -51,24 +59,32 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
             {/* User Actions */}
             <div className="hidden md:flex items-center space-x-4">
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleDarkMode}
+                className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 ${isDarkMode ? 'text-gray-300 hover:text-yellow-400 hover:bg-yellow-900/20' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
+                title={isDarkMode ? 'Mode clair' : 'Mode sombre'}
+              >
+                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
               {isAuthenticated ? (
                 <div className="flex items-center space-x-4">
                   {/* User Profile Button */}
                   <Link
                     to="/profile"
-                    className="flex items-center space-x-3 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors duration-200"
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                   >
                     <UserAvatar user={user} size="sm" />
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-900">{user?.username}</span>
-                      <span className="text-xs text-gray-500">Voir le profil</span>
+                      <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{user?.username}</span>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Voir le profil</span>
                     </div>
                   </Link>
                   
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
-                    className="flex items-center space-x-2 text-gray-600 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'text-gray-300 hover:text-red-400 hover:bg-red-900/20' : 'text-gray-600 hover:text-red-600 hover:bg-red-50'}`}
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Déconnexion</span>
@@ -78,7 +94,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <div className="flex items-center space-x-2">
                   <Link
                     to="/login"
-                    className="text-gray-600 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-blue-50"
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${isDarkMode ? 'text-gray-300 hover:text-blue-400 hover:bg-blue-900/20' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'}`}
                   >
                     🔑 Connexion
                   </Link>

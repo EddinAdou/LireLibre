@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LireLibre - Éditeur Complet avec Formatage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // État global de l'application
+        let state = {
+            isDarkMode: localStorage.getItem('lirelibre-theme') === 'dark',
+            showWritingTools: false,
+            isFullScreen: false,
+            story: {
+                title: 'Mon Histoire Fantastique',
+                description: 'Une aventure épique dans un monde magique...',
+                content: '# Chapitre 1 : Le Début\n\nIl était une fois, dans un **monde lointain**, où la *magie* régnait encore...\n\n## Une découverte inattendue\n\nLe jeune héros découvrit un __mystérieux__ grimoire.\n\n### Les premiers sorts\n\n• Sort de lumière\n• Sort de protection\n• Sort de guérison\n\n* * *\n\n— "Que la magie soit avec toi !", murmura le sage.',
+                isPublished: false,
+                status: 'draft'
+            }
+        };
+
+        // Appliquer le thème au démarrage
+        if (state.isDarkMode) {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Fonctions utilitaires
+        function toggleDarkMode() {
+            state.isDarkMode = !state.isDarkMode;
+            
+            if (state.isDarkMode) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('lirelibre-theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('lirelibre-theme', 'light');
+            }
+            render();
+        }
+
+        function toggleWritingTools() {
+            state.showWritingTools = !state.showWritingTools;
+            render();
+        }
+
+        function toggleFullScreen() {
+            state.isFullScreen = !state.isFullScreen;
+            render();
+        }
+
+        function saveStory() {
+            if (!state.story.title.trim()) {
+                alert('Le titre est obligatoire');
+                return;
+            }
+            console.log('Sauvegarde:', state.story);
+            alert('Histoire sauvegardée avec succès !');
+        }
+
+        function publishStory() {
+            if (!state.story.title.trim() || !state.story.content.trim()) {
+                alert('Le titre et le contenu sont obligatoires pour publier');
+                return;
+            }
+            
+            state.story.isPublished = !state.story.isPublished;
+            state.story.status = state.story.isPublished ? 'published' : 'draft';
+            
+            alert(state.story.isPublished ? 'Histoire publiée avec succès !' : 'Histoire dépubliée !');
+            render();
+        }
+
+        function previewStory() {
+            if (!state.story.content.trim()) {
+                alert('Rien à prévisualiser');
+                return;
+            }
+            alert('Aperçu de l\'histoire (fonctionnalité à venir)');
+        }
+
+        function insertText(text) {
+            const textarea = document.getElementById('content-textarea');
+            if (!textarea) return;
+
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const currentContent = state.story.content;
+            
+            state.story.content = currentContent.slice(0, start) + text + currentContent.slice(end);
+            render();
+            
+            // Repositionner le curseur
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = start + text.length;
+                textarea.focus();
+            }, 0);
+        }
+
+        // Fonctions de formatage
+        function insertHeading(level) {
+            const headingText = '\\n' + '#'.repeat(level) + ' ';
+            insertText(headingText);
+            alert(`Titre H${level} ajouté !`);
+        }
+
+        function insertBold() {
+            insertText('**texte en gras** ');
+            alert('Format gras ajouté !');
+        }
+
+        function insertItalic() {
+            insertText('*texte en italique* ');
+            alert('Format italique ajouté !');
+        }
+
+        function insertUnderline() {
+            insertText('__texte souligné__ ');
+            alert('Format souligné ajouté !');
+        }
+
+        function applyFont(fontFamily, fontName) {
+            const textarea = document.getElementById('content-textarea');
+            if (!textarea) return;
+            
+            textarea.style.fontFamily = fontFamily;
+            alert(`Police changée : ${fontName}`);
+        }
+
+        function insertPrompt() {
+            const prompts = [
+                "Il était une fois, dans un monde où...",
+                "Le jour où tout a changé, j'ai découvert que...",
+                "Au cœur de la nuit, un bruit étrange me réveilla...",
+                "Dans cette ville abandonnée, seul le vent racontait...",
+                "Elle ouvrit la lettre avec des mains tremblantes et lut...",
+                "Le dernier humain sur Terre venait de comprendre que..."
+            ];
+            const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+            insertText(randomPrompt + "\\n\\n");
+            alert('Prompt d\'écriture ajouté !');
+        }
+
+        function getStats() {
+            const words = state.story.content.split(/\\s+/).filter(w => w.length > 0).length;
+            const chars = state.story.content.length;
+            const readingTime = Math.ceil(words / 200);
+            return { words, chars, readingTime };
+        }
+
+        // Polices disponibles
+        const fonts = [
+            { name: 'Georgia (Classique)', value: '"Georgia", "Times New Roman", serif' },
+            { name: 'Arial (Moderne)', value: '"Arial", "Helvetica", sans-serif' },
+            { name: 'Garamond (Littéraire)', value: '"Garamond", "Times", serif' },
+            { name: 'Verdana (Lisible)', value: '"Verdana", "Geneva", sans-serif' },
+            { name: 'Courier (Machine à écrire)', value: '"Courier New", "Courier", monospace' },
+            { name: 'Palatino (Élégant)', value: '"Palatino", "Book Antiqua", serif' }
+        ];
+
+        // Fonction de rendu principal
+        function render() {
+            const app = document.getElementById('app');
+            const { isDarkMode, showWritingTools, isFullScreen, story } = state;
+            const stats = getStats();
+            
+            const containerClass = isFullScreen ? 'fixed inset-0 z-50' : 'min-h-screen';
+            const themeClass = isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black';
+            const cardClass = isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200';
+            const inputClass = isDarkMode ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-400 focus:border-blue-400' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500';
+            
+            app.className = `${containerClass} ${themeClass} transition-colors duration-300`;
+            
+            app.innerHTML = `
+                <!-- En-tête -->
+                <div class="${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-6 py-4">
+                    <div class="max-w-6xl mx-auto flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                                    <svg viewBox="0 0 24 24" class="w-5 h-5 text-white">
+                                        <path fill="currentColor" d="M21,5c-1.11-0.35-2.33-0.5-3.5-0.5c-1.95,0-4.05,0.4-5.5,1.5c-1.45-1.1-3.55-1.5-5.5-1.5 C5.33,4.5,4.11,4.65,3,5v14.65c0,0.25,0.25,0.5,0.5,0.5c0.1,0,0.15-0.05,0.25-0.05c0.85-0.3,2.1-0.5,3.25-0.5 c1.85,0,3.85,0.4,5,1.5c1.15-1.1,3.15-1.5,5-1.5c1.15,0,2.4,0.2,3.25,0.5c0.1,0.05,0.15,0.05,0.25,0.05c0.25,0,0.5-0.25,0.5-0.5V5 z M12,15.5c-1.45-1.1-3.55-1.5-5.5-1.5c-1.05,0-2.05,0.15-3,0.5V7c0.95-0.35,1.95-0.5,3-0.5c1.95,0,4.05,0.4,5.5,1.5V15.5z"/>
+                                    </svg>
+                                </div>
+                                <h1 class="text-xl font-bold">LireLibre - Éditeur Complet</h1>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <!-- Bouton Outils d'écriture -->
+                            <button onclick="toggleWritingTools()" class="p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} ${showWritingTools ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') : ''}" title="Outils d'aide à l'écriture">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                            </button>
+
+                            <!-- Bouton Aperçu -->
+                            <button onclick="previewStory()" class="flex items-center gap-2 px-3 py-2 ${isDarkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg transition-colors" title="Aperçu de l'histoire">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                Aperçu
+                            </button>
+
+                            <!-- Mode sombre -->
+                            <button onclick="toggleDarkMode()" class="p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}" title="${isDarkMode ? 'Mode clair' : 'Mode sombre'}">
+                                ${isDarkMode ? 
+                                    '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>' :
+                                    '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>'
+                                }
+                            </button>
+                            
+                            <!-- Plein écran -->
+                            <button onclick="toggleFullScreen()" class="p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}" title="${isFullScreen ? 'Quitter plein écran' : 'Mode plein écran'}">
+                                ${isFullScreen ? 
+                                    '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5m11 5.5V4.5M15 9h4.5M15 9l5.5-5.5M9 15v4.5M9 15H4.5M9 15l-5.5 5.5m11-5.5v4.5m0-4.5h4.5m0 0l-5.5 5.5"></path></svg>' :
+                                    '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>'
+                                }
+                            </button>
+                            
+                            <!-- Sauvegarder -->
+                            <button onclick="saveStory()" class="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                Sauvegarder
+                            </button>
+
+                            <!-- Publier -->
+                            <button onclick="publishStory()" class="flex items-center gap-2 px-6 py-2 ${story.isPublished ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg transition-colors">
+                                ${story.isPublished ? 
+                                    '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>' :
+                                    '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>'
+                                }
+                                ${story.isPublished ? 'Dépublier' : 'Publier'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenu principal -->
+                <div class="${isFullScreen ? 'h-full overflow-auto' : ''} max-w-5xl mx-auto p-8">
+                    <!-- Panneau d'outils d'écriture -->
+                    ${showWritingTools ? `
+                        <div class="${cardClass} rounded-xl p-6 mb-6 shadow-sm border-l-4 border-blue-500">
+                            <h3 class="text-lg font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-black'} flex items-center gap-2">
+                                <svg class="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                </svg>
+                                Outils d'aide à l'écriture
+                            </h3>
+                            
+                            <!-- Section Titres -->
+                            <div class="mb-6">
+                                <h4 class="text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} flex items-center gap-2">
+                                    <span class="text-purple-500">#</span>
+                                    Titres et Structure
+                                </h4>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <button onclick="insertHeading(1)" class="flex items-center gap-2 p-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <span class="text-purple-500 font-bold text-lg">H1</span>
+                                        <span class="font-medium">Grand Titre</span>
+                                    </button>
+                                    <button onclick="insertHeading(2)" class="flex items-center gap-2 p-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <span class="text-purple-500 font-bold">H2</span>
+                                        <span class="font-medium">Sous-titre</span>
+                                    </button>
+                                    <button onclick="insertHeading(3)" class="flex items-center gap-2 p-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <span class="text-purple-500 font-bold text-sm">H3</span>
+                                        <span class="font-medium">Section</span>
+                                    </button>
+                                    <button onclick="insertHeading(4)" class="flex items-center gap-2 p-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <span class="text-purple-500 font-bold text-sm">H4</span>
+                                        <span class="font-medium">Paragraphe</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Section Formatage -->
+                            <div class="mb-6">
+                                <h4 class="text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} flex items-center gap-2">
+                                    <span class="text-orange-500 font-bold">B</span>
+                                    Formatage du Texte
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <button onclick="insertBold()" class="flex items-center gap-3 p-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <span class="font-bold text-orange-500">B</span>
+                                        <span><strong>**Gras**</strong></span>
+                                    </button>
+                                    <button onclick="insertItalic()" class="flex items-center gap-3 p-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <span class="italic text-blue-500">I</span>
+                                        <span><em>*Italique*</em></span>
+                                    </button>
+                                    <button onclick="insertUnderline()" class="flex items-center gap-3 p-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <span class="underline text-green-500">U</span>
+                                        <span><u>__Souligné__</u></span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Section Polices -->
+                            <div class="mb-6">
+                                <h4 class="text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} flex items-center gap-2">
+                                    <span class="text-indigo-500">🔤</span>
+                                    Polices d'Écriture
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    ${fonts.map(font => `
+                                        <button onclick="applyFont('${font.value}', '${font.name}')" class="text-left p-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105" style="font-family: ${font.value}">
+                                            ${font.name}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <!-- Section Outils d'écriture -->
+                            <div class="mb-6">
+                                <h4 class="text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} flex items-center gap-2">
+                                    <span class="text-green-500">✏️</span>
+                                    Outils d'Écriture
+                                </h4>
+                                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <button onclick="insertPrompt()" class="flex items-center gap-3 p-4 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <div class="text-purple-500 text-xl">💡</div>
+                                        <div class="text-left">
+                                            <div class="font-medium">Prompt d'écriture</div>
+                                            <div class="text-sm opacity-75">Idée pour commencer</div>
+                                        </div>
+                                    </button>
+
+                                    <button onclick="insertText('\\n\\n--- Chapitre ---\\n\\n')" class="flex items-center gap-3 p-4 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <div class="text-green-500 text-xl">📖</div>
+                                        <div class="text-left">
+                                            <div class="font-medium">Saut de chapitre</div>
+                                            <div class="text-sm opacity-75">Nouvelle section</div>
+                                        </div>
+                                    </button>
+
+                                    <button onclick="insertText('— &quot;')" class="flex items-center gap-3 p-4 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <div class="text-orange-500 text-xl">💬</div>
+                                        <div class="text-left">
+                                            <div class="font-medium">Format dialogue</div>
+                                            <div class="text-sm opacity-75">— "Paroles"</div>
+                                        </div>
+                                    </button>
+
+                                    <button onclick="insertText('\\n• ')" class="flex items-center gap-3 p-4 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <div class="text-red-500 text-xl">📝</div>
+                                        <div class="text-left">
+                                            <div class="font-medium">Liste à puces</div>
+                                            <div class="text-sm opacity-75">• Élément</div>
+                                        </div>
+                                    </button>
+
+                                    <button onclick="insertText('\\n\\n* * *\\n\\n')" class="flex items-center gap-3 p-4 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <div class="text-indigo-500 text-xl">⭐</div>
+                                        <div class="text-left">
+                                            <div class="font-medium">Séparateur</div>
+                                            <div class="text-sm opacity-75">* * *</div>
+                                        </div>
+                                    </button>
+
+                                    <button onclick="insertText('\\n\\n> ')" class="flex items-center gap-3 p-4 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} rounded-lg transition-all duration-200 hover:scale-105">
+                                        <div class="text-cyan-500 text-xl">💭</div>
+                                        <div class="text-left">
+                                            <div class="font-medium">Citation</div>
+                                            <div class="text-sm opacity-75">> Texte cité</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Conseils d'écriture -->
+                            <div class="p-4 ${isDarkMode ? 'bg-gray-700/50' : 'bg-blue-50'} rounded-lg">
+                                <h4 class="font-medium mb-2 ${isDarkMode ? 'text-blue-300' : 'text-blue-800'}">
+                                    💡 Conseil d'écriture du jour
+                                </h4>
+                                <p class="text-sm ${isDarkMode ? 'text-gray-300' : 'text-blue-700'}">
+                                    Utilisez les outils de formatage pour structurer votre texte : titres, paragraphes, dialogues et mise en forme rendent votre histoire plus lisible et attrayante.
+                                </p>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Zone titre et description -->
+                    ${!isFullScreen ? `
+                        <div class="${cardClass} rounded-xl p-8 mb-8 shadow-sm">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'}">
+                                    Informations de base
+                                </h2>
+                                
+                                <div class="flex items-center gap-2 px-3 py-1 rounded-full text-sm ${story.isPublished ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}">
+                                    <div class="w-2 h-2 rounded-full ${story.isPublished ? 'bg-green-500' : 'bg-gray-400'}"></div>
+                                    ${story.isPublished ? 'Publiée' : 'Brouillon'}
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}">
+                                        Titre de l'histoire *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value="${story.title}"
+                                        onchange="state.story.title = this.value; render();"
+                                        placeholder="Donnez un titre captivant à votre histoire..."
+                                        class="w-full px-4 py-3 text-lg rounded-lg transition-all ${inputClass}"
+                                        style="direction: ltr; text-align: left;"
+                                    />
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}">
+                                        Description (résumé)
+                                    </label>
+                                    <textarea
+                                        value="${story.description}"
+                                        onchange="state.story.description = this.value; render();"
+                                        placeholder="Décrivez brièvement votre histoire pour attirer les lecteurs..."
+                                        rows="4"
+                                        class="w-full px-4 py-3 rounded-lg resize-none transition-all ${inputClass}"
+                                        style="direction: ltr; text-align: left;"
+                                    ></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Zone d'écriture -->
+                    <div class="${cardClass} rounded-xl p-8 shadow-sm ${isFullScreen ? 'h-full flex flex-col' : ''}">
+                        <h2 class="text-lg font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-black'}">
+                            ${isFullScreen ? 'Mode Écriture Plein Écran' : 'Contenu de l\'histoire'}
+                        </h2>
+                        
+                        <textarea
+                            id="content-textarea"
+                            value="${story.content}"
+                            oninput="state.story.content = this.value; render();"
+                            placeholder="${isFullScreen ? 'Mode concentration activé. Écrivez votre histoire en toute tranquillité...' : 'Utilisez les outils de formatage pour structurer votre texte :\\n\\n# Titre principal\\n## Sous-titre\\n\\n**Texte en gras** et *texte en italique*\\n\\n— "Dialogue"\\n\\n• Liste à puces'}"
+                            rows="${isFullScreen ? '' : '25'}"
+                            class="w-full px-4 py-4 text-base leading-relaxed rounded-lg resize-none transition-all ${inputClass} ${isFullScreen ? 'flex-1 h-full min-h-0' : ''}"
+                            style="direction: ltr; text-align: left; font-family: Georgia, 'Times New Roman', serif; line-height: 1.8;"
+                        ></textarea>
+                        
+                        <div class="mt-6 flex items-center gap-8 text-sm px-4 py-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-600'}">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium">Mots:</span>
+                                <span class="font-semibold ${isDarkMode ? 'text-white' : 'text-black'}">
+                                    ${stats.words.toLocaleString()}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium">Caractères:</span>
+                                <span class="font-semibold ${isDarkMode ? 'text-white' : 'text-black'}">
+                                    ${stats.chars.toLocaleString()}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium">Temps de lecture:</span>
+                                <span class="font-semibold ${isDarkMode ? 'text-white' : 'text-black'}">
+                                    ~${stats.readingTime} min
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Rendu initial
+        render();
+    </script>
+</body>
+</html>

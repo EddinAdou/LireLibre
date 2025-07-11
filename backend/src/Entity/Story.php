@@ -80,6 +80,22 @@ class Story
     #[Groups(['story:read', 'story:write'])]
     private ?string $status = 'draft';
 
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Groups(['story:read'])]
+    private ?int $wordCount = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Groups(['story:read'])]
+    private ?int $characterCount = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Groups(['story:read'])]
+    private ?int $readingTime = null; // en minutes
+
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    #[Groups(['story:read', 'story:write'])]
+    private ?string $language = 'fr';
+
     public function __construct()
     {
         $this->comments = new ArrayCollection();
@@ -323,5 +339,99 @@ class Story
     {
         $this->status = $status;
         return $this;
+    }
+
+    public function getWordCount(): ?int
+    {
+        return $this->wordCount;
+    }
+
+    public function setWordCount(?int $wordCount): static
+    {
+        $this->wordCount = $wordCount;
+        return $this;
+    }
+
+    public function getCharacterCount(): ?int
+    {
+        return $this->characterCount;
+    }
+
+    public function setCharacterCount(?int $characterCount): static
+    {
+        $this->characterCount = $characterCount;
+        return $this;
+    }
+
+    public function getReadingTime(): ?int
+    {
+        return $this->readingTime;
+    }
+
+    public function setReadingTime(?int $readingTime): static
+    {
+        $this->readingTime = $readingTime;
+        return $this;
+    }
+
+    public function getLanguage(): ?string
+    {
+        return $this->language;
+    }
+
+    public function setLanguage(?string $language): static
+    {
+        $this->language = $language;
+        return $this;
+    }
+
+    /**
+     * Calcule automatiquement les statistiques du texte
+     */
+    public function calculateStatistics(): static
+    {
+        if ($this->content) {
+            // Nettoyer le contenu HTML pour le comptage
+            $plainText = strip_tags($this->content);
+            $plainText = html_entity_decode($plainText, ENT_QUOTES, 'UTF-8');
+            $plainText = preg_replace('/\s+/', ' ', trim($plainText));
+
+            // Compter les caractères
+            $this->characterCount = mb_strlen($plainText, 'UTF-8');
+
+            // Compter les mots
+            if (!empty($plainText)) {
+                $words = preg_split('/\s+/', $plainText, -1, PREG_SPLIT_NO_EMPTY);
+                $this->wordCount = count($words);
+                
+                // Calculer le temps de lecture (200 mots par minute en moyenne)
+                $this->readingTime = max(1, (int)ceil($this->wordCount / 200));
+            } else {
+                $this->wordCount = 0;
+                $this->readingTime = 0;
+            }
+        } else {
+            $this->wordCount = 0;
+            $this->characterCount = 0;
+            $this->readingTime = 0;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Retourne les statistiques sous forme de tableau
+     */
+    #[Groups(['story:read'])]
+    public function getStatistics(): array
+    {
+        return [
+            'wordCount' => $this->wordCount ?? 0,
+            'characterCount' => $this->characterCount ?? 0,
+            'readingTime' => $this->readingTime ?? 0,
+            'viewCount' => $this->viewCount,
+            'likeCount' => $this->likeCount,
+            'commentCount' => $this->comments->count()
+        ];
     }
 }

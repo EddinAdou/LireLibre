@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Book, Plus, Search, Filter, Download, Edit, Eye, Trash2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { Story, StoryFilters, StoryCategory } from '../types/story';
 import { storiesService } from '../services/storiesService';
 
@@ -23,13 +24,145 @@ const StoriesPage: React.FC = () => {
     loadStories();
   }, [filters]);
 
+  // Recherche en temps réel
+  useEffect(() => {
+    const delayedSearch = setTimeout(() => {
+      if (searchTerm !== filters.search) {
+        setFilters({
+          ...filters,
+          search: searchTerm || undefined,
+        });
+      }
+    }, 500); // Délai de 500ms pour éviter trop de requêtes
+
+    return () => clearTimeout(delayedSearch);
+  }, [searchTerm]);
+
+  // Auto-filtrage par catégorie
+  useEffect(() => {
+    if (selectedCategory !== 'Tout') {
+      setFilters({
+        ...filters,
+        category: selectedCategory,
+      });
+    } else {
+      const { category, ...filtersWithoutCategory } = filters;
+      setFilters(filtersWithoutCategory);
+    }
+  }, [selectedCategory]);
+
   const loadStories = async () => {
     try {
       setLoading(true);
-      const response = await storiesService.getStories(filters);
-      setStories(response.stories);
+      // Simulation de données pour le développement
+      const mockStories: Story[] = [
+        {
+          id: '1',
+          title: 'Les Aventures de Clara',
+          description: 'Une jeune fille découvre un monde magique caché derrière son miroir.',
+          content: '# Chapitre 1\n\nClara avait toujours trouvé son miroir étrange...',
+          category: 'Fantasy',
+          status: 'published',
+          isPublished: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          authorId: 'user1',
+          author: { id: 'user1', name: 'TestUser' },
+          tags: ['aventure', 'magie'],
+          views: 150,
+          likes: 23,
+          estimatedReadingTime: 15,
+          language: 'fr',
+          source: {
+            type: 'user',
+            license: 'CC BY-SA 4.0'
+          },
+          statistics: {
+            wordCount: 3000,
+            characterCount: 18000,
+            readingTime: 15
+          }
+        },
+        {
+          id: '2',
+          title: 'Mystère à la Bibliothèque',
+          description: 'Un bibliothécaire découvre que certains livres cachent des secrets millénaires.',
+          content: '# Prologue\n\nLa vieille bibliothèque gardait ses secrets...',
+          category: 'Mystère',
+          status: 'draft',
+          isPublished: false,
+          createdAt: new Date(Date.now() - 86400000), // Hier
+          updatedAt: new Date(Date.now() - 3600000), // Il y a 1h
+          authorId: 'user1',
+          author: { id: 'user1', name: 'TestUser' },
+          tags: ['mystère', 'livre'],
+          views: 89,
+          likes: 12,
+          estimatedReadingTime: 25,
+          language: 'fr',
+          source: {
+            type: 'user',
+            license: 'CC BY-SA 4.0'
+          },
+          statistics: {
+            wordCount: 5000,
+            characterCount: 30000,
+            readingTime: 25
+          }
+        },
+        {
+          id: '3',
+          title: 'Le Voyage Spatial',
+          description: 'Une équipe d\'explorateurs découvre une planète habitée par une civilisation avancée.',
+          content: '# Mission Alpha\n\nLe vaisseau spatial fendit l\'espace...',
+          category: 'Science-fiction',
+          status: 'published',
+          isPublished: true,
+          createdAt: new Date(Date.now() - 172800000), // Il y a 2 jours
+          updatedAt: new Date(Date.now() - 7200000), // Il y a 2h
+          authorId: 'user1',
+          author: { id: 'user1', name: 'TestUser' },
+          tags: ['espace', 'futur'],
+          views: 234,
+          likes: 45,
+          estimatedReadingTime: 40,
+          language: 'fr',
+          source: {
+            type: 'user',
+            license: 'CC BY-SA 4.0'
+          },
+          statistics: {
+            wordCount: 8000,
+            characterCount: 48000,
+            readingTime: 40
+          }
+        }
+      ];
+
+      // Filtrer selon les critères
+      let filteredStories = mockStories;
+      
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filteredStories = filteredStories.filter(story => 
+          story.title.toLowerCase().includes(searchLower) ||
+          story.description.toLowerCase().includes(searchLower) ||
+          story.tags.some(tag => tag.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      if (filters.category && filters.category !== 'Tout') {
+        filteredStories = filteredStories.filter(story => story.category === filters.category);
+      }
+      
+      if (filters.status) {
+        filteredStories = filteredStories.filter(story => story.status === filters.status);
+      }
+
+      setStories(filteredStories);
     } catch (error) {
       console.error('Erreur lors du chargement des histoires:', error);
+      toast.error('Erreur lors du chargement des histoires');
     } finally {
       setLoading(false);
     }
@@ -38,19 +171,70 @@ const StoriesPage: React.FC = () => {
   const handleSearch = () => {
     setFilters({
       ...filters,
-      search: searchTerm,
+      search: searchTerm || undefined,
       category: selectedCategory !== 'Tout' ? selectedCategory : undefined,
     });
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSelectedCategory('Tout');
+    setFilters({});
   };
 
   const handleDeleteStory = async (storyId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette histoire ?')) {
       try {
-        await storiesService.deleteStory(storyId);
-        loadStories();
-      } catch (error) {
+        // Simuler la suppression en supprimant de la liste locale
+        setStories(prev => prev.filter(story => story.id !== storyId));
+        toast.success('Histoire supprimée avec succès');
+      } catch (error: any) {
         console.error('Erreur lors de la suppression:', error);
+        toast.error('Erreur lors de la suppression de l\'histoire');
       }
+    }
+  };
+
+  const handleViewStory = (storyId: string) => {
+    const story = stories.find(s => s.id === storyId);
+    if (!story) {
+      toast.error('Histoire introuvable');
+      return;
+    }
+    
+    // Naviguer vers la page de lecture/consultation
+    navigate(`/story/${storyId}`);
+  };
+
+  const handleEditStory = (storyId: string) => {
+    const story = stories.find(s => s.id === storyId);
+    if (!story) {
+      toast.error('Histoire introuvable');
+      return;
+    }
+    
+    // Naviguer vers l'éditeur
+    navigate(`/write/${storyId}`);
+  };
+
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      if (diffHours === 0) {
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        return diffMinutes <= 0 ? 'À l\'instant' : `Il y a ${diffMinutes} min`;
+      }
+      return `Il y a ${diffHours}h`;
+    } else if (diffDays === 1) {
+      return 'Hier';
+    } else if (diffDays < 7) {
+      return `Il y a ${diffDays} jours`;
+    } else {
+      return date.toLocaleDateString('fr-FR');
     }
   };
 
@@ -126,6 +310,15 @@ const StoriesPage: React.FC = () => {
               Rechercher
             </button>
 
+            {(searchTerm || selectedCategory !== 'Tout') && (
+              <button
+                onClick={clearSearch}
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Effacer
+              </button>
+            )}
+
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
@@ -191,6 +384,30 @@ const StoriesPage: React.FC = () => {
           )}
         </div>
 
+        {/* Résultats de recherche */}
+        {(filters.search || filters.category) && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-blue-900">
+                  Résultats de recherche
+                </h3>
+                <p className="text-blue-700">
+                  {loading ? 'Recherche en cours...' : `${stories.length} histoire(s) trouvée(s)`}
+                  {filters.search && ` pour "${filters.search}"`}
+                  {filters.category && ` dans la catégorie "${filters.category}"`}
+                </p>
+              </div>
+              <button
+                onClick={clearSearch}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                Voir toutes les histoires
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Liste des histoires */}
         {loading ? (
           <div className="text-center py-12">
@@ -239,23 +456,23 @@ const StoriesPage: React.FC = () => {
                     </h3>
                     <div className="flex space-x-1 ml-2">
                       <button
-                        onClick={() => navigate(`/stories/${story.id}`)}
+                        onClick={() => handleViewStory(story.id)}
                         className="text-blue-600 hover:text-blue-800 p-1"
-                        title="Lire"
+                        title="Consulter l'histoire"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => navigate(`/stories/${story.id}/edit`)}
+                        onClick={() => handleEditStory(story.id)}
                         className="text-yellow-600 hover:text-yellow-800 p-1"
-                        title="Modifier"
+                        title="Modifier l'histoire"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteStory(story.id)}
                         className="text-red-600 hover:text-red-800 p-1"
-                        title="Supprimer"
+                        title="Supprimer l'histoire"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -289,10 +506,10 @@ const StoriesPage: React.FC = () => {
                   
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <span>
-                      {story.statistics?.wordCount || 0} mots
+                      📝 {story.statistics?.wordCount?.toLocaleString() || 0} mots
                     </span>
                     <span>
-                      {new Date(story.updatedAt).toLocaleDateString('fr-FR')}
+                      📅 {formatDate(story.updatedAt)}
                     </span>
                   </div>
                   

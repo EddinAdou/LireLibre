@@ -92,9 +92,29 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Gestion du contenu de l'éditeur
   const handleInput = useCallback(() => {
     if (editorRef.current) {
+      // Force la direction LTR après chaque modification
+      editorRef.current.style.direction = 'ltr';
+      editorRef.current.style.textAlign = 'left';
       onChange(editorRef.current.innerHTML);
     }
   }, [onChange]);
+
+  // Force la direction LTR au focus
+  const handleFocus = useCallback(() => {
+    if (editorRef.current) {
+      editorRef.current.style.direction = 'ltr';
+      editorRef.current.style.textAlign = 'left';
+    }
+  }, []);
+
+  // Initialise la direction après montage
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.style.direction = 'ltr';
+      editorRef.current.style.textAlign = 'left';
+      editorRef.current.setAttribute('dir', 'ltr');
+    }
+  }, [value]);
 
   // Raccourcis clavier
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -313,6 +333,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         contentEditable
         className="min-h-96 p-6 focus:outline-none prose prose-lg max-w-none"
         onInput={handleInput}
+        onFocus={handleFocus}
         onKeyDown={handleKeyDown}
         onMouseUp={handleSelectionChange}
         onKeyUp={handleSelectionChange}

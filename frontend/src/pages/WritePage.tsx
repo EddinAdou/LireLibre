@@ -9,8 +9,9 @@ import { Save, ArrowLeft, Eye, Settings, Image, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Story, StoryCategory, CreateStoryRequest, UpdateStoryRequest } from '../types/story';
 import { storiesService } from '../services/storiesService';
-import RichTextEditor from '../components/editor/RichTextEditor';
+import AdvancedRichTextEditor from '../components/editor/AdvancedRichTextEditor';
 import StoryPreview from '../components/StoryPreview';
+import TestDescriptionField from '../components/TestDescriptionField';
 
 const WritePage: React.FC = () => {
   const { storyId } = useParams<{ storyId?: string }>();
@@ -113,6 +114,36 @@ const WritePage: React.FC = () => {
     }
   };
 
+  // Sauvegarde automatique
+  const handleAutoSave = async (content: string) => {
+    // Sauvegarder seulement si on est en mode édition
+    if (isEditing && storyId && title) {
+      try {
+        const storyData = {
+          title,
+          description,
+          content,
+          category,
+          tags,
+          isPublished: false // Auto-save comme brouillon
+        };
+
+        const updateData: UpdateStoryRequest = {
+          id: storyId,
+          ...storyData,
+        };
+        
+        await storiesService.updateStory(updateData);
+        toast.success('Auto-sauvegarde réussie', {
+          duration: 2000,
+          position: 'bottom-right'
+        });
+      } catch (error) {
+        console.error('Erreur lors de l\'auto-sauvegarde:', error);
+      }
+    }
+  };
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -148,6 +179,9 @@ const WritePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Composant de test pour diagnostiquer le problème */}
+      <TestDescriptionField />
+      
       {/* Barre d'outils supérieure */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -214,25 +248,78 @@ const WritePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Zone d'écriture principale */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow-sm">
+            {/* Carte titre et description */}
+            <div className="bg-white rounded-lg shadow-sm mb-6">
               <div className="p-6">
                 {/* Titre */}
-                <input
-                  type="text"
-                  placeholder="Titre de votre histoire..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full text-3xl font-bold text-gray-900 placeholder-gray-400 border-none focus:outline-none mb-4"
-                />
+                <div className="mb-6">
+                  <label htmlFor="story-title" className="block text-sm font-medium text-gray-700 mb-2">
+                    Titre de l'histoire
+                  </label>
+                  <input
+                    id="story-title"
+                    type="text"
+                    placeholder="Titre de votre histoire..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full text-2xl font-bold text-gray-900 placeholder-gray-400 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    style={{
+                      direction: 'ltr',
+                      textAlign: 'left',
+                      pointerEvents: 'auto'
+                    }}
+                    dir="ltr"
+                    autoComplete="off"
+                  />
+                </div>
 
                 {/* Description */}
-                <textarea
-                  placeholder="Brève description de votre histoire..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  className="w-full text-gray-600 placeholder-gray-400 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-6 resize-none"
-                />
+                <div className="mb-0">
+                  <label htmlFor="story-description" className="block text-sm font-medium text-gray-700 mb-2">
+                    Description de l'histoire
+                  </label>
+                  <textarea
+                    id="story-description"
+                    placeholder="Brève description de votre histoire... Décrivez l'intrigue, les personnages principaux, l'ambiance..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    onFocus={(e) => {
+                      console.log('Description field focused');
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.direction = 'ltr';
+                      target.style.textAlign = 'left';
+                    }}
+                    onClick={(e) => {
+                      console.log('Description field clicked');
+                      const target = e.target as HTMLTextAreaElement;
+                      target.focus();
+                    }}
+                    rows={4}
+                    className="w-full text-gray-700 placeholder-gray-400 border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                    style={{
+                      direction: 'ltr',
+                      textAlign: 'left',
+                      pointerEvents: 'auto',
+                      zIndex: 10,
+                      cursor: 'text',
+                      position: 'relative'
+                    }}
+                    dir="ltr"
+                    autoComplete="off"
+                    spellCheck="false"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Carte éditeur de contenu */}
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="p-6">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contenu de l'histoire
+                  </label>
+                </div>
 
                 {/* Éditeur de contenu ou Aperçu */}
                 {showPreview ? (
@@ -246,11 +333,14 @@ const WritePage: React.FC = () => {
                     coverImageUrl={story?.coverImageUrl}
                   />
                 ) : (
-                  <RichTextEditor
+                  <AdvancedRichTextEditor
                     value={content}
                     onChange={setContent}
-                    placeholder="Commencez à écrire votre histoire..."
+                    placeholder="Commencez à écrire votre histoire... Utilisez la barre d'outils pour ajouter des chapitres, sous-titres et formatage."
+                    className="w-full"
+                    minHeight="500px"
                     autoSave={true}
+                    onAutoSave={handleAutoSave}
                   />
                 )}
               </div>
@@ -363,6 +453,36 @@ const WritePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Styles CSS pour s'assurer que les champs de texte sont interactifs */}
+      <style>{`
+        input[type="text"], textarea {
+          pointer-events: auto !important;
+          user-select: text !important;
+          -webkit-user-select: text !important;
+          -moz-user-select: text !important;
+          -ms-user-select: text !important;
+          cursor: text !important;
+          touch-action: manipulation !important;
+        }
+        
+        input[type="text"]:focus, textarea:focus {
+          outline: 2px solid #3b82f6 !important;
+          outline-offset: 2px !important;
+        }
+        
+        /* Force la direction LTR pour les champs de saisie */
+        input[type="text"], textarea {
+          direction: ltr !important;
+          text-align: left !important;
+          unicode-bidi: bidi-override !important;
+        }
+        
+        /* S'assurer que les labels sont cliquables */
+        label {
+          cursor: pointer !important;
+        }
+      `}</style>
     </div>
   );
 };

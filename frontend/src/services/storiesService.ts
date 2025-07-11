@@ -15,26 +15,39 @@ class StoriesService {
   async getStories(filters: StoryFilters = {}): Promise<{ stories: Story[]; total: number; page: number; totalPages: number }> {
     const params = new URLSearchParams();
     
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          params.append(key, value.join(','));
-        } else {
-          params.append(key, value.toString());
-        }
-      }
-    });
+    // Ajouter les paramètres de filtrage
+    if (filters.search) {
+      params.append('search', filters.search);
+    }
+    if (filters.category && filters.category !== 'Tout') {
+      params.append('category', filters.category);
+    }
+    if (filters.language) {
+      params.append('language', filters.language);
+    }
+    if (filters.status) {
+      params.append('status', filters.status);
+    }
+    if (filters.tags && filters.tags.length > 0) {
+      params.append('tags', filters.tags.join(','));
+    }
+    if (filters.page) {
+      params.append('page', filters.page.toString());
+    }
+    if (filters.limit) {
+      params.append('limit', filters.limit.toString());
+    }
 
     const response = await apiService.get<{
       stories: Story[];
-      pagination: { total: number; page: number; totalPages: number };
+      pagination: { total: number; page: number; pages: number };
     }>(`${this.baseUrl}?${params}`);
 
     return {
       stories: response.stories,
       total: response.pagination.total,
       page: response.pagination.page,
-      totalPages: response.pagination.totalPages,
+      totalPages: response.pagination.pages,
     };
   }
 

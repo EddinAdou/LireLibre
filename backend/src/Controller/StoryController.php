@@ -31,6 +31,9 @@ class StoryController extends AbstractController
         $limit = min(50, max(1, $request->query->getInt('limit', 10)));
         $status = $request->query->get('status', 'published');
         $search = $request->query->get('search');
+        $category = $request->query->get('category');
+        $language = $request->query->get('language');
+        $tags = $request->query->get('tags');
 
         $qb = $this->entityManager->getRepository(Story::class)->createQueryBuilder('s')
             ->leftJoin('s.author', 'a')
@@ -42,10 +45,29 @@ class StoryController extends AbstractController
                ->setParameter('status', $status);
         }
 
-        // Search functionality
+        // Search functionality - améliorer la recherche
         if ($search) {
-            $qb->andWhere('s.title LIKE :search OR s.content LIKE :search')
+            $qb->andWhere('(s.title LIKE :search OR s.content LIKE :search OR s.description LIKE :search)')
                ->setParameter('search', '%' . $search . '%');
+        }
+
+        // Filter by category
+        if ($category) {
+            $qb->andWhere('s.category = :category')
+               ->setParameter('category', $category);
+        }
+
+        // Filter by language
+        if ($language) {
+            $qb->andWhere('s.language = :language')
+               ->setParameter('language', $language);
+        }
+
+        // Filter by tags
+        if ($tags) {
+            $tagArray = explode(',', $tags);
+            $qb->andWhere('s.tags LIKE :tags')
+               ->setParameter('tags', '%' . implode('%', $tagArray) . '%');
         }
 
         // Pagination
@@ -65,8 +87,24 @@ class StoryController extends AbstractController
         }
 
         if ($search) {
-            $totalQb->andWhere('s.title LIKE :search OR s.content LIKE :search')
+            $totalQb->andWhere('(s.title LIKE :search OR s.content LIKE :search OR s.description LIKE :search)')
                     ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($category) {
+            $totalQb->andWhere('s.category = :category')
+                    ->setParameter('category', $category);
+        }
+
+        if ($language) {
+            $totalQb->andWhere('s.language = :language')
+                    ->setParameter('language', $language);
+        }
+
+        if ($tags) {
+            $tagArray = explode(',', $tags);
+            $totalQb->andWhere('s.tags LIKE :tags')
+                    ->setParameter('tags', '%' . implode('%', $tagArray) . '%');
         }
 
         $total = $totalQb->getQuery()->getSingleScalarResult();
@@ -91,32 +129,43 @@ class StoryController extends AbstractController
     #[Route('/{id}', name: 'story_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(int $id): JsonResponse
     {
-        $story = $this->entityManager->getRepository(Story::class)
-            ->createQueryBuilder('s')
-            ->leftJoin('s.author', 'a')
-            ->leftJoin('s.comments', 'c')
-            ->leftJoin('c.author', 'ca')
-            ->addSelect('a', 'c', 'ca')
-            ->where('s.id = :id')
-            ->setParameter('id', $id)
-            ->getQuery()
-            ->getOneOrNullResult();
+        try {
+            $story = $this->entityManager->getRepository(Story::class)->find($id);
 
-        if (!$story) {
+            if (!$story) {
+                return new JsonResponse([
+                    'error' => 'Story not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            // Calculer les statistiques automatiquement
+            $story->calculateStatistics();
+            $this->entityManager->flush();
+
             return new JsonResponse([
-                'error' => 'Story not found'
-            ], Response::HTTP_NOT_FOUND);
+                'story' => [
+                    'id' => $story->getId(),
+                    'title' => $story->getTitle(),
+                    'description' => $story->getDescription(),
+                    'content' => $story->getContent(),
+                    'status' => $story->getStatus(),
+                    'word_count' => $story->getWordCount(),
+                    'character_count' => $story->getCharacterCount(),
+                    'reading_time' => $story->getReadingTime(),
+                    'language' => $story->getLanguage(),
+                    'created_at' => $story->getCreatedAt()?->format('Y-m-d H:i:s'),
+                    'updated_at' => $story->getUpdatedAt()?->format('Y-m-d H:i:s'),
+                    'author' => [
+                        'id' => $story->getAuthor()?->getId(),
+                        'email' => $story->getAuthor()?->getEmail()
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Internal server error: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $serializedStory = $this->serializer->serialize(
-            $story, 
-            'json', 
-            ['groups' => ['story:read', 'comment:read']]
-        );
-
-        return new JsonResponse([
-            'story' => json_decode($serializedStory, true)
-        ]);
     }
 
     #[Route('', name: 'story_create', methods: ['POST'])]
@@ -189,6 +238,11 @@ class StoryController extends AbstractController
         
         $story->setSlug($slug);
         
+        // Set language
+        if (isset($data['language'])) {
+            $story->setLanguage($data['language']);
+        }
+
         // Set publication status
         $isPublished = $data['isPublished'] ?? false;
         if (is_string($isPublished)) {
@@ -196,6 +250,9 @@ class StoryController extends AbstractController
         }
         $story->setIsPublished($isPublished);
         $story->setStatus($isPublished ? 'published' : 'draft');
+
+        // Calculate text statistics automatically
+        $story->calculateStatistics();
 
         // Handle cover image upload if provided
         if (isset($coverImageFile) && $coverImageFile) {
@@ -307,6 +364,13 @@ class StoryController extends AbstractController
             $story->setIsPublished($isPublished);
             $story->setStatus($isPublished ? 'published' : 'draft');
         }
+
+        if (isset($data['language'])) {
+            $story->setLanguage($data['language']);
+        }
+
+        // Calculate text statistics automatically when content is updated
+        $story->calculateStatistics();
 
         // Handle cover image upload if provided
         if (isset($coverImageFile) && $coverImageFile) {
