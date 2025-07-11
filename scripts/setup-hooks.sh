@@ -37,8 +37,11 @@ if [ -d "$hooks_dir" ]; then
     echo "${BLUE}Hooks actifs:${NC}"
     echo "  • pre-commit: Vérifications avant commit"
     echo "  • commit-msg: Validation du format des messages"
+    echo "  • pre-push: Validation avant push (pipeline, qualité, sécurité)"
     echo ""
-    echo "${YELLOW}📖 Guide de développement: DEVELOPMENT.md${NC}"
+    echo "${YELLOW}📖 Guides disponibles:${NC}"
+    echo "  • DEVELOPMENT.md - Guide de développement complet"
+    echo "  • docs/AUTOMATION.md - Guide d'automatisation"
 else
     echo "${RED}❌ Dossier .githooks introuvable${NC}"
     exit 1

@@ -11,7 +11,18 @@
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version",
     "version:major": "npm version major --no-git-tag-version",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "pr:create": "node scripts/auto-pr.js",
+    "pr:check": "node scripts/pre-push-check.js",
+    "pipeline:status": "gh run list --limit 5",
+    "pipeline:watch": "gh run watch",
+    "quality:check": "npm run quality:frontend && npm run quality:backend",
+    "quality:frontend": "cd frontend && npm run lint && npm run build",
+    "quality:backend": "cd backend && composer install && vendor/bin/phpcs --standard=PSR12 src/",
+    "security:audit": "npm run security:frontend && npm run security:backend",
+    "security:frontend": "cd frontend && npm audit",
+    "security:backend": "cd backend && composer audit",
+    "setup:hooks": "bash scripts/setup-hooks.sh"
   },
   "repository": {
     "type": "git",

@@ -27,11 +27,13 @@ git checkout -b feature/ma-nouvelle-feature
 git add .
 git commit -m "feat(stories): add collaborative editing feature"
 
-# 3. Pousser et créer une PR
-git push -u origin feature/ma-nouvelle-feature
-# → Aller sur GitHub et créer une Pull Request
+# 3. Vérifier la qualité avant push
+npm run pr:check
 
-# 4. Après merge, nettoyer
+# 4. Créer automatiquement une PR
+npm run pr:create
+
+# 5. Après merge, nettoyer
 git checkout develop
 git pull origin develop
 git branch -d feature/ma-nouvelle-feature
@@ -103,6 +105,27 @@ Avant de créer une PR, vérifiez :
 - [ ] 📖 Message de commit suit la convention
 - [ ] 🔍 Self-review effectuée
 
+## 🤖 Automatisation
+
+### Commandes d'automatisation
+
+```bash
+# Créer automatiquement une Pull Request
+npm run pr:create
+
+# Vérifier la qualité avant push
+npm run pr:check
+
+# Voir le statut des pipelines
+npm run pipeline:status
+
+# Vérifier la qualité du code
+npm run quality:check
+
+# Audit de sécurité
+npm run security:audit
+```
+
 ## 🎯 URLs Importantes
 
 - **Frontend**: http://localhost:3000
@@ -152,6 +175,7 @@ npm run dev
 ## 📚 Documentation Complète
 
 - 📖 [Guide de Développement Complet](DEVELOPMENT.md)
+- 🤖 [Guide d'Automatisation](docs/AUTOMATION.md)
 - 🗄️ [Documentation Database](docs/DATABASE.md)
 - 🐘 [Guide pgAdmin](PGADMIN_GUIDE.md)
 - 📋 [Changelog](CHANGELOG.md)
