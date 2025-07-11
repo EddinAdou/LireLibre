@@ -1,5 +1,5 @@
 import { apiService } from './apiService';
-import { User, LoginCredentials, RegisterCredentials, ApiResponse } from '../types';
+import { User, LoginCredentials, RegisterCredentials } from '../types';
 
 interface AuthResponse {
   user: User;
@@ -8,23 +8,23 @@ interface AuthResponse {
 
 class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await apiService.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
-    return response.data;
+    const response = await apiService.post<AuthResponse>('/auth/login', credentials);
+    return response;
   }
 
   async register(credentials: RegisterCredentials): Promise<AuthResponse> {
-    const response = await apiService.post<ApiResponse<AuthResponse>>('/auth/register', credentials);
-    return response.data;
+    const response = await apiService.post<AuthResponse>('/auth/register', credentials);
+    return response;
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await apiService.get<ApiResponse<User>>('/auth/me');
-    return response.data;
+    const response = await apiService.get<User>('/auth/me');
+    return response;
   }
 
   async refreshToken(): Promise<{ token: string }> {
-    const response = await apiService.post<ApiResponse<{ token: string }>>('/auth/refresh');
-    return response.data;
+    const response = await apiService.post<{ token: string }>('/auth/refresh');
+    return response;
   }
 
   async logout(): Promise<void> {

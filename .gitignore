@@ -95,3 +95,37 @@ Thumbs.db
 # Database
 *.sqlite
 *.db
+
+# === BACKEND SYMFONY SPECIFIQUE ===
+backend/var/cache/
+backend/var/log/
+backend/var/data.db
+backend/var/data.db-journal
+backend/.phpunit.result.cache
+backend/public/uploads/
+backend/config/jwt/
+backend/config/secrets/
+backend/symfony.lock
+composer.lock
+
+# === FRONTEND VITE SPECIFIQUE ===
+frontend/.vite/
+frontend/public/hot
+
+# === FICHIERS D'INSTALLATION ===
+install-tools.ps1
+setup-dev-environment.ps1
+C:/yadou/
+
+# === CERTIFICATS ET CLÉS ===
+*.key
+*.pem
+*.p12
+*.p8
+*.cer
+*.crt
+
+# === FICHIERS DE TEST ===
+test-*.html
+test-*.php
+test-*.js

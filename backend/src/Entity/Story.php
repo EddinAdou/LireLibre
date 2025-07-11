@@ -72,6 +72,14 @@ class Story
     #[ORM\OneToMany(mappedBy: 'story', targetEntity: Favorite::class, orphanRemoval: true)]
     private Collection $favorites;
 
+    #[ORM\Column(type: 'string', length: 255, unique: true)]
+    #[Groups(['story:read', 'story:write'])]
+    private ?string $slug = null;
+
+    #[ORM\Column(type: 'string', length: 50)]
+    #[Groups(['story:read', 'story:write'])]
+    private ?string $status = 'draft';
+
     public function __construct()
     {
         $this->comments = new ArrayCollection();
@@ -292,6 +300,28 @@ class Story
             }
         }
 
+        return $this;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(string $slug): static
+    {
+        $this->slug = $slug;
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): static
+    {
+        $this->status = $status;
         return $this;
     }
 }
