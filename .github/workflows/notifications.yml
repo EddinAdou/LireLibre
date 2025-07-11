@@ -1,167 +1,137 @@
-name: 📢 Notification Webhook
+name: 📢 Advanced Notifications
 
 on:
+  workflow_run:
+    workflows: ["🚀 LireLibre CI/CD Pipeline"]
+    types:
+      - completed
+  issues:
+    types: [opened, closed]
   pull_request:
-    types: [opened, closed, reopened]
-  push:
-    branches: [main, develop]
+    types: [opened, closed]
   release:
     types: [published]
-  workflow_run:
-    workflows: ["🚀 CI/CD Pipeline Avancé"]
-    types: [completed]
 
 jobs:
-  notify:
-    name: 📢 Send Notifications
+  notify-pipeline-status:
+    name: Pipeline Status Notification
     runs-on: ubuntu-latest
+    if: github.event.workflow_run
     
     steps:
-      - name: 📢 Discord/Slack Notification
+      - name: 📥 Get workflow info
+        id: workflow-info
+        run: |
+          echo "status=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+          echo "commit=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+
+      - name: 🎉 Success notification
+        if: steps.workflow-info.outputs.status == 'success'
         uses: actions/github-script@v7
         with:
           script: |
-            const { context } = require('@actions/github');
+            const { owner, repo } = context.repo;
+            const branch = '${{ steps.workflow-info.outputs.branch }}';
+            const commit = '${{ steps.workflow-info.outputs.commit }}';
             
-            let message = '';
-            let color = 0x00ff00; // Green by default
-            
-            switch (context.eventName) {
-              case 'pull_request':
-                const pr = context.payload.pull_request;
-                const action = context.payload.action;
-                
-                if (action === 'opened') {
-                  message = `🔀 **Nouvelle PR ouverte**\n` +
-                          `📝 **${pr.title}**\n` +
-                          `👤 Par: ${pr.user.login}\n` +
-                          `🔗 [Voir la PR](${pr.html_url})`;
-                  color = 0x0099ff;
-                } else if (action === 'closed' && pr.merged) {
-                  message = `✅ **PR mergée avec succès**\n` +
-                          `📝 **${pr.title}**\n` +
-                          `👤 Par: ${pr.user.login}\n` +
-                          `🎯 Branche: ${pr.base.ref}`;
-                  color = 0x00ff00;
-                }
-                break;
-                
-              case 'push':
-                const commits = context.payload.commits;
-                const branch = context.payload.ref.replace('refs/heads/', '');
-                
-                if (commits.length > 0) {
-                  message = `📦 **Nouveau push sur ${branch}**\n` +
-                          `📝 ${commits.length} commit(s)\n` +
-                          `👤 Par: ${context.payload.pusher.name}\n` +
-                          `💬 Dernier commit: ${commits[commits.length - 1].message}`;
-                  color = branch === 'main' ? 0xff9900 : 0x0099ff;
-                }
-                break;
-                
-              case 'release':
-                const release = context.payload.release;
-                message = `🚀 **Nouvelle release publiée**\n` +
-                        `🏷️ **Version: ${release.tag_name}**\n` +
-                        `📝 ${release.name}\n` +
-                        `🔗 [Voir la release](${release.html_url})`;
-                color = 0xff6600;
-                break;
-                
-              case 'workflow_run':
-                const workflow = context.payload.workflow_run;
-                const conclusion = workflow.conclusion;
-                
-                if (conclusion === 'success') {
-                  message = `✅ **Pipeline réussie**\n` +
-                          `⚙️ Workflow: ${workflow.name}\n` +
-                          `🌟 Branche: ${workflow.head_branch}`;
-                  color = 0x00ff00;
-                } else if (conclusion === 'failure') {
-                  message = `❌ **Pipeline échouée**\n` +
-                          `⚙️ Workflow: ${workflow.name}\n` +
-                          `🔥 Branche: ${workflow.head_branch}\n` +
-                          `🔗 [Voir les logs](${workflow.html_url})`;
-                  color = 0xff0000;
-                }
-                break;
-            }
-            
-            if (message) {
-              console.log('📢 Notification:', message);
+            if (context.payload.workflow_run.event === 'pull_request') {
+              const prs = await github.rest.pulls.list({
+                owner,
+                repo,
+                head: `${owner}:${branch}`,
+                state: 'open'
+              });
               
-              // Ici vous pouvez ajouter l'intégration avec Discord/Slack
-              // Exemple pour Discord:
-              /*
-              const discordWebhook = process.env.DISCORD_WEBHOOK_URL;
-              if (discordWebhook) {
-                const payload = {
-                  embeds: [{
-                    title: "LireLibre - Notification",
-                    description: message,
-                    color: color,
-                    timestamp: new Date().toISOString(),
-                    footer: {
-                      text: "LireLibre CI/CD"
-                    }
-                  }]
-                };
-                
-                await fetch(discordWebhook, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(payload)
+              if (prs.data.length > 0) {
+                const pr = prs.data[0];
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  body: `🎉 **Pipeline CI/CD réussi !** ✅\n\n📦 Tous les tests sont passés\n🔒 Scans de sécurité OK\n🚀 Build réussi\n📋 Commit: \`${commit.slice(0, 7)}\`\n\nCette PR est prête pour la revue ! 👍`
                 });
               }
-              */
             }
 
-  # Notification par email pour les événements critiques
-  email-notification:
-    name: 📧 Email Alerts
+      - name: ❌ Failure notification
+        if: steps.workflow-info.outputs.status == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const branch = '${{ steps.workflow-info.outputs.branch }}';
+            const commit = '${{ steps.workflow-info.outputs.commit }}';
+            
+            if (context.payload.workflow_run.event === 'pull_request') {
+              const prs = await github.rest.pulls.list({
+                owner,
+                repo,
+                head: `${owner}:${branch}`,
+                state: 'open'
+              });
+              
+              if (prs.data.length > 0) {
+                const pr = prs.data[0];
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  body: `❌ **Échec du pipeline CI/CD** 🚨\n\n🔍 Des problèmes ont été détectés :\n- Vérifiez les tests qui échouent\n- Consultez les logs de sécurité\n- Corrigez les erreurs de build\n\n📋 Commit: \`${commit.slice(0, 7)}\`\n🔗 Voir les détails dans Actions\n\nMerci de corriger avant le merge ! 🔧`
+                });
+              }
+            }
+
+  notify-release:
+    name: Release Notification
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: github.event_name == 'release' && github.event.action == 'published'
     
     steps:
-      - name: 📧 Send Email Alert
-        uses: dawidd6/action-send-mail@v3
+      - name: 🚀 New release notification
+        uses: actions/github-script@v7
         with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: |
-            ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' && '[URGENT] Pipeline Failed' || 'Production Deployment' }} - LireLibre
-          body: |
-            ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' && 
-            format('🚨 PIPELINE FAILURE ALERT
-
-            Repository: {0}
-            Workflow: {1}
-            Branch: {2}
-            Commit: {3}
-
-            Please check the logs immediately: {4}', 
-            github.repository, 
-            github.event.workflow_run.name, 
-            github.event.workflow_run.head_branch,
-            github.event.workflow_run.head_sha,
-            github.event.workflow_run.html_url) ||
+          script: |
+            const release = context.payload.release;
             
-            format('🚀 PRODUCTION DEPLOYMENT
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📦 Nouvelle version ${release.tag_name} disponible !`,
+              body: `🎉 **Une nouvelle version de LireLibre vient d'être publiée !**\n\n## 📋 Version: ${release.tag_name}\n\n### 🔗 Liens utiles:\n- Notes de version: ${release.html_url}\n- Images Docker disponibles\n\n### 🚀 Déploiement:\nLes nouvelles images Docker sont automatiquement disponibles\n\n${release.body || 'Voir les notes de version complètes ci-dessus.'}\n\n*Cette issue a été créée automatiquement par le système CI/CD* 🤖`,
+              labels: ['release', 'announcement']
+            });
 
-            Repository: {0}
-            Branch: main
-            Commits: {1}
-            Pusher: {2}
+  notify-pr-events:
+    name: PR Event Notifications
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 📝 PR opened notification
+        if: github.event.action == 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: `👋 **Merci pour cette Pull Request !**\n\n🔄 Le pipeline CI/CD va maintenant :\n- ✅ Vérifier la qualité du code\n- 🧪 Exécuter tous les tests\n- 🔒 Scanner les vulnérabilités de sécurité\n- 🏗️ Tester le build\n\n📋 **Checklist pour le reviewer:**\n- [ ] Code conforme aux standards\n- [ ] Tests ajoutés/mis à jour si nécessaire\n- [ ] Documentation mise à jour\n- [ ] Pas de vulnérabilités introduites\n\n*Les résultats apparaîtront ici automatiquement* 🤖`
+            });
 
-            Latest commit: {3}', 
-            github.repository,
-            github.event.commits | length,
-            github.event.pusher.name,
-            github.event.commits[-1].message) }}
-          to: ${{ secrets.NOTIFICATION_EMAIL }}
-          from: LireLibre CI/CD <${{ secrets.EMAIL_USERNAME }}>
-        continue-on-error: true
+      - name: 🎉 PR merged notification
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: `🎉 **Pull Request mergée avec succès !**\n\n✅ Changements intégrés dans \`${pr.base.ref}\`\n🚀 Le déploiement automatique va commencer\n📦 Une nouvelle version sera créée si nécessaire\n\nMerci pour votre contribution ! 👏`
+            });
