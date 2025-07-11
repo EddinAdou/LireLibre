@@ -6,6 +6,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { LoginCredentials } from '../types';
+import BookIcon from '../components/icons/BookIcon';
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -42,8 +43,8 @@ const Login: React.FC = () => {
         <div className="max-w-md w-full">
           {/* Logo or Brand */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-4">
-              <span className="text-white text-2xl font-bold">L</span>
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mb-4 shadow-lg">
+              <BookIcon size={32} className="text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Bon retour !

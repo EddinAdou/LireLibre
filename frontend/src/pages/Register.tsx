@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { RegisterCredentials } from '../types';
 import Alert from '../components/ui/Alert';
 import PasswordStrength from '../components/ui/PasswordStrength';
+import BookIcon from '../components/icons/BookIcon';
 
 const registerSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -109,8 +110,8 @@ const Register: React.FC = () => {
         <div className="max-w-md w-full">
           {/* Logo or Brand */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mb-4">
-              <span className="text-white text-2xl font-bold">L</span>
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mb-4 shadow-lg">
+              <BookIcon size={32} className="text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Créer un compte
