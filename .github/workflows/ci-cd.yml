@@ -201,17 +201,20 @@ jobs:
           extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql, redis
           coverage: xdebug
 
+      - name: � Create JWT keys and .env
+        run: |
+          cd backend
+          # Create .env file first (required for Composer)
+          cp .env.example .env
+          # Create JWT keys
+          mkdir -p config/jwt
+          openssl genpkey -algorithm RSA -out config/jwt/private.pem -aes256 -pass pass:test
+          openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout -passin pass:test
+
       - name: 📦 Install dependencies
         run: |
           cd backend
           composer install --prefer-dist --no-progress --no-interaction
-
-      - name: 🔑 Create JWT keys
-        run: |
-          cd backend
-          mkdir -p config/jwt
-          openssl genpkey -algorithm RSA -out config/jwt/private.pem -aes256 -pass pass:test
-          openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout -passin pass:test
 
       - name: 🗄️ Setup database
         env:
