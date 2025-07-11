@@ -8,18 +8,18 @@ interface AuthResponse {
 
 class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await apiService.post<AuthResponse>('/auth/login', credentials);
-    return response;
+    const response = await apiService.post<{ user: User; token: string; message: string }>('/auth/login', credentials);
+    return { user: response.user, token: response.token };
   }
 
   async register(credentials: RegisterCredentials): Promise<AuthResponse> {
-    const response = await apiService.post<AuthResponse>('/auth/register', credentials);
-    return response;
+    const response = await apiService.post<{ user: User; token: string; message: string }>('/auth/register', credentials);
+    return { user: response.user, token: response.token };
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await apiService.get<User>('/auth/me');
-    return response;
+    const response = await apiService.get<{ user: User }>('/auth/me');
+    return response.user;
   }
 
   async refreshToken(): Promise<{ token: string }> {
