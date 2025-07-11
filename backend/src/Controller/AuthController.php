@@ -161,6 +161,40 @@ class AuthController extends AbstractController
     #[Route('/me', name: 'auth_me', methods: ['GET'])]
     public function me(): JsonResponse
     {
+        error_log('Auth/me endpoint called');
+        $user = $this->getUser();
+        error_log('Retrieved user: ' . ($user instanceof User ? $user->getEmail() : 'null or not User instance'));
+
+        if (!$user instanceof User) {
+            error_log('User not authenticated or not instance of User class');
+            return new JsonResponse([
+                'error' => 'User not authenticated'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        error_log('Returning user data for: ' . $user->getEmail());
+        return new JsonResponse([
+            'user' => [
+                'id' => $user->getId(),
+                'email' => $user->getEmail(),
+                'username' => $user->getUsername(),
+                'firstName' => $user->getFirstName(),
+                'lastName' => $user->getLastName(),
+                'avatar' => $user->getAvatar(),
+                'bio' => $user->getBio(),
+                'location' => $user->getLocation(),
+                'website' => $user->getWebsite(),
+                'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
+                'roles' => $user->getRoles(),
+                'createdAt' => $user->getCreatedAt()->format('c'),
+                'updatedAt' => $user->getUpdatedAt()->format('c')
+            ]
+        ]);
+    }
+
+    #[Route('/user/profile', name: 'user_profile', methods: ['GET'])]
+    public function getUserProfile(): JsonResponse
+    {
         $user = $this->getUser();
 
         if (!$user instanceof User) {
@@ -183,8 +217,256 @@ class AuthController extends AbstractController
                 'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
                 'roles' => $user->getRoles(),
                 'createdAt' => $user->getCreatedAt()->format('c'),
-                'updatedAt' => $user->getUpdatedAt()->format('c')
+                'updatedAt' => $user->getUpdatedAt()?->format('c')
             ]
+        ]);
+    }
+
+    #[Route('/user/profile', name: 'user_update_profile', methods: ['PUT', 'PATCH'])]
+    public function updateUserProfile(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'error' => 'User not authenticated'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (isset($data['firstName'])) {
+            $user->setFirstName($data['firstName']);
+        }
+        if (isset($data['lastName'])) {
+            $user->setLastName($data['lastName']);
+        }
+        if (isset($data['bio'])) {
+            $user->setBio($data['bio']);
+        }
+        if (isset($data['location'])) {
+            $user->setLocation($data['location']);
+        }
+        if (isset($data['website'])) {
+            $user->setWebsite($data['website']);
+        }
+        if (isset($data['birthDate'])) {
+            $user->setBirthDate($data['birthDate'] ? new \DateTime($data['birthDate']) : null);
+        }
+
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'message' => 'Profile updated successfully',
+            'user' => [
+                'id' => $user->getId(),
+                'email' => $user->getEmail(),
+                'username' => $user->getUsername(),
+                'firstName' => $user->getFirstName(),
+                'lastName' => $user->getLastName(),
+                'avatar' => $user->getAvatar(),
+                'bio' => $user->getBio(),
+                'location' => $user->getLocation(),
+                'website' => $user->getWebsite(),
+                'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
+                'roles' => $user->getRoles(),
+                'createdAt' => $user->getCreatedAt()->format('c'),
+                'updatedAt' => $user->getUpdatedAt()?->format('c')
+            ]
+        ]);
+    }
+
+    #[Route('/user/avatar', name: 'user_upload_avatar', methods: ['POST'])]
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'error' => 'User not authenticated'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $uploadedFile = $request->files->get('avatar');
+        
+        if (!$uploadedFile) {
+            return new JsonResponse([
+                'error' => 'No file uploaded'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Validate file type
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($uploadedFile->getMimeType(), $allowedTypes)) {
+            return new JsonResponse([
+                'error' => 'Invalid file type. Only JPEG, PNG, GIF and WebP are allowed.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Validate file size (max 5MB)
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        if ($uploadedFile->getSize() > $maxSize) {
+            return new JsonResponse([
+                'error' => 'File too large. Maximum size is 5MB.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            // Get file extension from original name or mime type
+            $extension = $uploadedFile->getClientOriginalExtension();
+            if (!$extension) {
+                $mimeToExt = [
+                    'image/jpeg' => 'jpg',
+                    'image/png' => 'png',
+                    'image/gif' => 'gif',
+                    'image/webp' => 'webp'
+                ];
+                $extension = $mimeToExt[$uploadedFile->getMimeType()] ?? 'jpg';
+            }
+
+            // Generate unique filename
+            $filename = uniqid('avatar_', true) . '.' . $extension;
+            
+            // Define upload directory and file path
+            $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/avatars/';
+            $filePath = $uploadDir . $filename;
+            
+            // Ensure directory exists
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            
+            // Move uploaded file to destination
+            $uploadedFile->move($uploadDir, $filename);
+            
+            // Set avatar path in database (relative to public folder)
+            $avatarPath = '/uploads/avatars/' . $filename;
+            
+            // Remove old avatar file if exists
+            if ($user->getAvatar()) {
+                $oldAvatarPath = $this->getParameter('kernel.project_dir') . '/public' . $user->getAvatar();
+                if (file_exists($oldAvatarPath) && is_file($oldAvatarPath)) {
+                    unlink($oldAvatarPath);
+                }
+            }
+            
+            $user->setAvatar($avatarPath);
+            $this->entityManager->flush();
+
+            return new JsonResponse([
+                'message' => 'Avatar uploaded successfully',
+                'avatar' => $avatarPath,
+                'user' => [
+                    'id' => $user->getId(),
+                    'email' => $user->getEmail(),
+                    'username' => $user->getUsername(),
+                    'firstName' => $user->getFirstName(),
+                    'lastName' => $user->getLastName(),
+                    'avatar' => $user->getAvatar(),
+                    'bio' => $user->getBio(),
+                    'location' => $user->getLocation(),
+                    'website' => $user->getWebsite(),
+                    'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
+                    'roles' => $user->getRoles(),
+                    'createdAt' => $user->getCreatedAt()->format('c'),
+                    'updatedAt' => $user->getUpdatedAt()?->format('c')
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Error uploading avatar: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/user/avatar', name: 'user_remove_avatar', methods: ['DELETE'])]
+    public function removeAvatar(): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'error' => 'User not authenticated'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        try {
+            // Remove old avatar file if exists
+            if ($user->getAvatar()) {
+                $oldAvatarPath = $this->getParameter('kernel.project_dir') . '/public' . $user->getAvatar();
+                if (file_exists($oldAvatarPath) && is_file($oldAvatarPath)) {
+                    unlink($oldAvatarPath);
+                }
+            }
+
+            $user->setAvatar(null);
+            $this->entityManager->flush();
+
+            return new JsonResponse([
+                'message' => 'Avatar removed successfully',
+                'user' => [
+                    'id' => $user->getId(),
+                    'email' => $user->getEmail(),
+                    'username' => $user->getUsername(),
+                    'firstName' => $user->getFirstName(),
+                    'lastName' => $user->getLastName(),
+                    'avatar' => $user->getAvatar(),
+                    'bio' => $user->getBio(),
+                    'location' => $user->getLocation(),
+                    'website' => $user->getWebsite(),
+                    'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
+                    'roles' => $user->getRoles(),
+                    'createdAt' => $user->getCreatedAt()->format('c'),
+                    'updatedAt' => $user->getUpdatedAt()?->format('c')
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Error removing avatar: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    #[Route('/user/change-password', name: 'user_change_password', methods: ['POST'])]
+    public function changePassword(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return new JsonResponse([
+                'error' => 'User not authenticated'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['currentPassword'], $data['newPassword'])) {
+            return new JsonResponse([
+                'error' => 'Current password and new password are required'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Verify current password
+        if (!$this->passwordHasher->isPasswordValid($user, $data['currentPassword'])) {
+            return new JsonResponse([
+                'error' => 'Current password is incorrect'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Validate new password
+        if (strlen($data['newPassword']) < 8) {
+            return new JsonResponse([
+                'error' => 'New password must be at least 8 characters long'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Update password
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data['newPassword']);
+        $user->setPassword($hashedPassword);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'message' => 'Password changed successfully'
         ]);
     }
 }
