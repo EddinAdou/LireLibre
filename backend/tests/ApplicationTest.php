@@ -2,32 +2,68 @@
 
 namespace App\Tests;
 
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class ApplicationTest extends TestCase
+class ApplicationTest extends KernelTestCase
 {
     public function testBasicMath(): void
     {
         $result = 2 + 2;
-        $this->assertEquals(4, $result);
+        if ($result !== 4) {
+            throw new \Exception("Expected 4, got $result");
+        }
+        // Test passes
+        $this->assertTrue(true);
     }
 
     public function testStringComparison(): void
     {
         $string = 'Hello World';
-        $this->assertStringContainsString('World', $string);
+        if (strpos($string, 'World') === false) {
+            throw new \Exception("String should contain 'World'");
+        }
+        // Test passes
+        $this->assertTrue(true);
     }
 
     public function testArrayOperations(): void
     {
         $array = ['apple', 'banana', 'cherry'];
-        $this->assertCount(3, $array);
-        $this->assertContains('apple', $array);
+        if (count($array) !== 3) {
+            throw new \Exception("Array should have 3 elements");
+        }
+        if (!in_array('apple', $array)) {
+            throw new \Exception("Array should contain 'apple'");
+        }
+        // Test passes
+        $this->assertTrue(true);
     }
 
-    public function testBooleanAssertions(): void
+    public function testKernelBoot(): void
     {
+        $kernel = self::bootKernel();
+        if ($kernel->getEnvironment() !== 'test') {
+            throw new \Exception("Environment should be 'test'");
+        }
+        // Test passes
         $this->assertTrue(true);
-        $this->assertFalse(false);
+    }
+
+    public function testServiceContainer(): void
+    {
+        self::bootKernel();
+        $container = self::getContainer();
+        if ($container === null) {
+            throw new \Exception("Container should not be null");
+        }
+        // Test passes
+        $this->assertTrue(true);
+    }
+
+    private function assertTrue(bool $condition): void
+    {
+        if (!$condition) {
+            throw new \Exception("Assertion failed: expected true");
+        }
     }
 }

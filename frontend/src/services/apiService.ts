@@ -1,5 +1,17 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
+// TypeScript declaration for Vite env variables
+interface ImportMetaEnv {
+  readonly VITE_API_BASE_URL?: string;
+  // add other env variables here if needed
+}
+
+declare global {
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 class ApiService {
