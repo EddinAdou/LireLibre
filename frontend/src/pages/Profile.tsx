@@ -3,8 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { User, Mail, Calendar, MapPin, Edit, Save, X, Settings, Shield, Bell } from 'lucide-react';
 import AvatarUpload from '../components/ui/AvatarUpload';
 import FormField from '../components/ui/FormField';
-import { ProfileService, ProfileData } from '../services/profileService';
-import { UPLOAD_BASE_URL } from '../config.ts';
+import { ProfileService } from '../services/profileService';
 
 interface UserProfile {
   username: string;
