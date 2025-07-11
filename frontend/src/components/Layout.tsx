@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, PenTool, User, LogOut, Menu, X } from 'lucide-react';
+import { BookOpen, PenTool, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import BookIcon from './icons/BookIcon';
+import UserAvatar from './ui/UserAvatar';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -20,8 +22,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary" />
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full shadow-lg">
+                <BookIcon size={20} className="text-white" />
+              </div>
               <span className="text-2xl font-bold text-gray-900">LireLibre</span>
             </Link>
 
@@ -47,17 +51,23 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* User Actions */}
             <div className="hidden md:flex items-center space-x-4">
               {isAuthenticated ? (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
+                  {/* User Profile Button */}
                   <Link
                     to="/profile"
-                    className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+                    className="flex items-center space-x-3 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors duration-200"
                   >
-                    <User className="h-5 w-5" />
-                    <span className="text-sm">{user?.username}</span>
+                    <UserAvatar user={user} size="sm" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900">{user?.username}</span>
+                      <span className="text-xs text-gray-500">Voir le profil</span>
+                    </div>
                   </Link>
+                  
+                  {/* Logout Button */}
                   <button
                     onClick={handleLogout}
-                    className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                    className="flex items-center space-x-2 text-gray-600 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Déconnexion</span>
@@ -67,13 +77,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <div className="flex items-center space-x-3">
                   <Link
                     to="/login"
-                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                    className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
                   >
                     Connexion
                   </Link>
                   <Link
                     to="/register"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 px-6 py-2 rounded-lg text-sm font-medium shadow-sm transition-all duration-200 transform hover:scale-105"
                   >
                     Inscription
                   </Link>
@@ -116,20 +126,26 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <div className="border-t pt-2">
                   {isAuthenticated ? (
                     <>
+                      <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-3">
+                        <UserAvatar user={user} size="md" />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900">{user?.username}</span>
+                          <span className="text-xs text-gray-500">Utilisateur connecté</span>
+                        </div>
+                      </div>
                       <Link
                         to="/profile"
-                        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium"
+                        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-3 py-2 rounded-lg text-base font-medium transition-colors duration-200"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <User className="h-4 w-4" />
-                        <span>{user?.username}</span>
+                        <span>Mon Profil</span>
                       </Link>
                       <button
                         onClick={() => {
                           handleLogout();
                           setIsMobileMenuOpen(false);
                         }}
-                        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                        className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg text-base font-medium w-full text-left transition-colors duration-200"
                       >
                         <LogOut className="h-4 w-4" />
                         <span>Déconnexion</span>
@@ -139,14 +155,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <>
                       <Link
                         to="/login"
-                        className="block text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-base font-medium"
+                        className="block text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-3 py-3 rounded-lg text-base font-medium transition-colors duration-200"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         Connexion
                       </Link>
                       <Link
                         to="/register"
-                        className="block bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-2 rounded-md text-base font-medium mt-2"
+                        className="block bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 px-3 py-3 rounded-lg text-base font-medium mt-2 text-center transition-all duration-200"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         Inscription
