@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, PenTool, LogOut, Menu, X } from 'lucide-react';
+import { BookOpen, PenTool, LogOut, Menu, X, Users, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import BookIcon from './icons/BookIcon';
 import UserAvatar from './ui/UserAvatar';
+import LiveStats from './ui/LiveStats';
+import ReadingAnimation from './ui/ReadingAnimation';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -22,11 +23,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
-              <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full shadow-lg">
-                <BookIcon size={20} className="text-white" />
-              </div>
-              <span className="text-2xl font-bold text-gray-900">LireLibre</span>
+            <Link to="/" className="flex items-center space-x-3 group">
+              <BookOpen className="h-8 w-8 text-primary group-hover:text-blue-600 transition-all duration-300 group-hover:scale-110" />
+              <span className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                LireLibre
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -182,44 +183,125 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <BookOpen className="h-6 w-6 text-primary" />
-                <span className="text-lg font-semibold">LireLibre</span>
+      <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 text-white relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-20 h-20 bg-blue-500 rounded-full animate-pulse"></div>
+          <div className="absolute top-32 right-20 w-16 h-16 bg-purple-500 rounded-full animate-pulse delay-1000"></div>
+          <div className="absolute bottom-20 left-1/3 w-12 h-12 bg-cyan-500 rounded-full animate-pulse delay-2000"></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Brand Section */}
+            <div className="md:col-span-2">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <BookOpen className="h-8 w-8 text-blue-400" />
+                  <span className="text-2xl font-bold text-white">LireLibre</span>
+                </div>
+                <ReadingAnimation />
               </div>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-300 text-lg leading-relaxed mb-6 max-w-md">
                 Plateforme collaborative pour la lecture et l'écriture d'histoires.
                 Rejoignez notre communauté d'auteurs et de lecteurs passionnés.
               </p>
+              <LiveStats />
             </div>
+
+            {/* Navigation Links */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+              <h3 className="text-lg font-bold text-white mb-6 relative">
                 Navigation
+                <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-blue-400 rounded-full"></div>
               </h3>
-              <ul className="space-y-2">
-                <li><Link to="/stories" className="text-gray-600 hover:text-gray-900 text-sm">Histoires</Link></li>
-                <li><Link to="/write" className="text-gray-600 hover:text-gray-900 text-sm">Écrire</Link></li>
-                <li><Link to="/profile" className="text-gray-600 hover:text-gray-900 text-sm">Profil</Link></li>
+              <ul className="space-y-3">
+                <li>
+                  <Link 
+                    to="/stories" 
+                    className="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center space-x-2 group"
+                  >
+                    <BookOpen className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Découvrir les histoires</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/write" 
+                    className="text-gray-300 hover:text-purple-400 transition-colors duration-200 flex items-center space-x-2 group"
+                  >
+                    <PenTool className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Écrire une histoire</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/profile" 
+                    className="text-gray-300 hover:text-green-400 transition-colors duration-200 flex items-center space-x-2 group"
+                  >
+                    <Users className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Mon profil</span>
+                  </Link>
+                </li>
               </ul>
             </div>
+
+            {/* Support & Contact */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+              <h3 className="text-lg font-bold text-white mb-6 relative">
                 Support
+                <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-purple-400 rounded-full"></div>
               </h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Centre d'aide</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Conditions d'utilisation</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Politique de confidentialité</a></li>
+              <ul className="space-y-3">
+                <li>
+                  <a 
+                    href="#" 
+                    className="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center space-x-2 group"
+                  >
+                    <Mail className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span>Centre d'aide</span>
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#" 
+                    className="text-gray-300 hover:text-purple-400 transition-colors duration-200 block hover:translate-x-1 transition-transform duration-200"
+                  >
+                    Conditions d'utilisation
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="#" 
+                    className="text-gray-300 hover:text-green-400 transition-colors duration-200 block hover:translate-x-1 transition-transform duration-200"
+                  >
+                    Politique de confidentialité
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-center text-gray-600 text-sm">
-              © 2025 LireLibre. Tous droits réservés.
-            </p>
+
+          {/* Bottom Section */}
+          <div className="mt-12 pt-8 border-t border-gray-700">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                <p className="text-gray-400 text-sm">
+                  © 2025 LireLibre. Tous droits réservés.
+                </p>
+                <div className="hidden md:block w-px h-4 bg-gray-600"></div>
+                <p className="text-gray-500 text-xs">
+                  Fait avec ❤️ pour les passionnés de lecture
+                </p>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 text-sm text-gray-400">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span>Tous systèmes opérationnels</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
