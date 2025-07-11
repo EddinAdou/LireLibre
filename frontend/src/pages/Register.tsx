@@ -6,7 +6,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { RegisterCredentials } from '../types';
-import PasswordStrength from '../components/PasswordStrength';
+import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 
 const registerSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -34,12 +34,13 @@ const Register: React.FC = () => {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
+    watch,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   });
 
+  // Watch password field for real-time validation
   const watchedPassword = watch('password', '');
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -156,7 +157,7 @@ const Register: React.FC = () => {
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
-              <PasswordStrength password={watchedPassword} />
+              <PasswordStrengthIndicator password={watchedPassword || ''} />
             </div>
 
             {/* Confirm Password */}

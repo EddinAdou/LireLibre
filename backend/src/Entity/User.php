@@ -13,8 +13,8 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
-#[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée')]
-#[UniqueEntity(fields: ['username'], message: 'Ce nom d\'utilisateur est déjà pris')]
+#[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée.')]
+#[UniqueEntity(fields: ['username'], message: 'Ce nom d\'utilisateur est déjà pris.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -25,39 +25,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
-    #[Assert\NotBlank(message: 'L\'adresse email est obligatoire')]
-    #[Assert\Email(message: 'L\'adresse email n\'est pas valide')]
+    #[Assert\NotBlank(message: 'L\'email est obligatoire.')]
+    #[Assert\Email(message: 'Veuillez entrer un email valide.')]
+    #[Assert\Length(max: 180, maxMessage: 'L\'email ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $email = null;
 
     #[ORM\Column(type: 'string', length: 50, unique: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
-    #[Assert\NotBlank(message: 'Le nom d\'utilisateur est obligatoire')]
+    #[Assert\NotBlank(message: 'Le nom d\'utilisateur est obligatoire.')]
     #[Assert\Length(
         min: 3,
         max: 20,
-        minMessage: 'Le nom d\'utilisateur doit contenir au moins {{ limit }} caractères',
-        maxMessage: 'Le nom d\'utilisateur ne peut pas dépasser {{ limit }} caractères'
+        minMessage: 'Le nom d\'utilisateur doit contenir au moins {{ limit }} caractères.',
+        maxMessage: 'Le nom d\'utilisateur ne peut pas dépasser {{ limit }} caractères.'
     )]
     #[Assert\Regex(
         pattern: '/^[a-zA-Z0-9_]+$/',
-        message: 'Le nom d\'utilisateur ne peut contenir que des lettres, chiffres et tirets bas'
+        message: 'Le nom d\'utilisateur ne peut contenir que des lettres, chiffres et tirets bas.'
     )]
     private ?string $username = null;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
-    #[Assert\Length(
-        max: 100,
-        maxMessage: 'Le prénom ne peut pas dépasser {{ limit }} caractères'
-    )]
+    #[Assert\Length(max: 100, maxMessage: 'Le prénom ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $firstName = null;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
-    #[Assert\Length(
-        max: 100,
-        maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères'
-    )]
+    #[Assert\Length(max: 100, maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $lastName = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
