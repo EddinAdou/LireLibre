@@ -54,14 +54,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    console.log('AuthContext useEffect - Token found:', !!token);
     if (token) {
       dispatch({ type: 'SET_TOKEN', payload: token });
       // Verify token and get user data
+      console.log('Attempting to get current user...');
       authService.getCurrentUser()
         .then(user => {
+          console.log('User retrieved successfully:', user);
           dispatch({ type: 'SET_USER', payload: user });
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error('Failed to get current user:', error);
           localStorage.removeItem('token');
           dispatch({ type: 'LOGOUT' });
         });
@@ -70,12 +74,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (credentials: LoginCredentials) => {
     try {
+      console.log('Starting login process...', credentials.email);
       dispatch({ type: 'SET_LOADING', payload: true });
       const { user, token } = await authService.login(credentials);
+      console.log('Login successful, received:', { user, token: !!token });
       localStorage.setItem('token', token);
       dispatch({ type: 'SET_TOKEN', payload: token });
       dispatch({ type: 'SET_USER', payload: user });
+      console.log('Login process completed');
     } catch (error) {
+      console.error('Login failed:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
       throw error;
     }
