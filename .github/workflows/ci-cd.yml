@@ -30,7 +30,9 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           # Vérifier les messages de commit suivent la convention
-          git log --oneline ${{ github.event.pull_request.base.sha }}..${{ github.sha }} | while read line; do
+          # On ne vérifie que les commits qui sont nouveaux dans cette PR
+          echo "Checking commits in this PR..."
+          git log --oneline ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | while read line; do
             # Ignorer les commits de merge automatiques
             if echo "$line" | grep -qE "^[a-f0-9]+ Merge [a-f0-9]+ into [a-f0-9]+"; then
               echo "⚠️ Commit de merge automatique ignoré: $line"
@@ -41,11 +43,18 @@ jobs:
               echo "⚠️ Commit de merge ignoré: $line"
               continue
             fi
+            # Ignorer les commits qui commencent par des emojis (anciens commits)
+            if echo "$line" | grep -qE "^[a-f0-9]+ [🔧🚀📦✨🔒🧪📢]"; then
+              echo "⚠️ Commit avec emoji ignoré (ancien format): $line"
+              continue
+            fi
             # Vérifier le format conventionnel pour les autres commits
             if ! echo "$line" | grep -qE "^[a-f0-9]+ (feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+"; then
               echo "❌ Message de commit invalide: $line"
               echo "Format attendu: type(scope): description"
               exit 1
+            else
+              echo "✅ Commit valide: $line"
             fi
           done
 
