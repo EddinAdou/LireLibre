@@ -2,16 +2,19 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
-#[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'users')]
+#[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée')]
+#[UniqueEntity(fields: ['username'], message: 'Ce nom d\'utilisateur est déjà pris')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -22,18 +25,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
+    #[Assert\NotBlank(message: 'L\'adresse email est obligatoire')]
+    #[Assert\Email(message: 'L\'adresse email n\'est pas valide')]
     private ?string $email = null;
 
     #[ORM\Column(type: 'string', length: 50, unique: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
+    #[Assert\NotBlank(message: 'Le nom d\'utilisateur est obligatoire')]
+    #[Assert\Length(
+        min: 3,
+        max: 20,
+        minMessage: 'Le nom d\'utilisateur doit contenir au moins {{ limit }} caractères',
+        maxMessage: 'Le nom d\'utilisateur ne peut pas dépasser {{ limit }} caractères'
+    )]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-Z0-9_]+$/',
+        message: 'Le nom d\'utilisateur ne peut contenir que des lettres, chiffres et tirets bas'
+    )]
     private ?string $username = null;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
+    #[Assert\Length(
+        max: 100,
+        maxMessage: 'Le prénom ne peut pas dépasser {{ limit }} caractères'
+    )]
     private ?string $firstName = null;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
+    #[Assert\Length(
+        max: 100,
+        maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères'
+    )]
     private ?string $lastName = null;
 
     #[ORM\Column(type: 'string', nullable: true)]

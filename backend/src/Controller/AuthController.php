@@ -62,6 +62,14 @@ class AuthController extends AbstractController
         $user->setUsername($data['username']);
         $user->setRoles(['ROLE_USER']);
         
+        // Set optional fields
+        if (isset($data['firstName'])) {
+            $user->setFirstName($data['firstName']);
+        }
+        if (isset($data['lastName'])) {
+            $user->setLastName($data['lastName']);
+        }
+        
         // Hash password
         $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
         $user->setPassword($hashedPassword);
@@ -92,7 +100,11 @@ class AuthController extends AbstractController
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
                 'username' => $user->getUsername(),
-                'roles' => $user->getRoles()
+                'firstName' => $user->getFirstName(),
+                'lastName' => $user->getLastName(),
+                'roles' => $user->getRoles(),
+                'createdAt' => $user->getCreatedAt()->format('c'),
+                'updatedAt' => $user->getUpdatedAt()->format('c')
             ],
             'token' => $token
         ], Response::HTTP_CREATED);
