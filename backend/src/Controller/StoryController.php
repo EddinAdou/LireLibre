@@ -577,4 +577,87 @@ class StoryController extends AbstractController
             ]
         ], Response::HTTP_CREATED);
     }
+
+    #[Route('/{id}/content-stats', name: 'story_content_stats', methods: ['GET'])]
+    public function getContentStats(int $id): JsonResponse
+    {
+        $story = $this->entityManager->getRepository(Story::class)->find($id);
+        if (!$story) {
+            return new JsonResponse(['error' => 'Histoire non trouvée'], Response::HTTP_NOT_FOUND);
+        }
+
+        $content = $story->getContent() ?? '';
+        $stats = $this->calculateContentStats($content);
+
+        return new JsonResponse($stats);
+    }
+
+    #[Route('/{id}/content-chunks', name: 'story_content_chunks', methods: ['GET'])]
+    public function getContentChunks(int $id, Request $request): JsonResponse
+    {
+        $story = $this->entityManager->getRepository(Story::class)->find($id);
+        if (!$story) {
+            return new JsonResponse(['error' => 'Histoire non trouvée'], Response::HTTP_NOT_FOUND);
+        }
+
+        $chunkSize = min(10000, max(1000, $request->query->getInt('chunk_size', 5000)));
+        $offset = max(0, $request->query->getInt('offset', 0));
+        
+        $content = $story->getContent() ?? '';
+        $totalLength = strlen($content);
+        
+        $chunk = substr($content, $offset, $chunkSize);
+        $hasMore = ($offset + $chunkSize) < $totalLength;
+        
+        return new JsonResponse([
+            'chunk' => $chunk,
+            'offset' => $offset,
+            'length' => strlen($chunk),
+            'hasMore' => $hasMore,
+            'totalLength' => $totalLength,
+            'progress' => $totalLength > 0 ? round((($offset + strlen($chunk)) / $totalLength) * 100, 2) : 0
+        ]);
+    }
+
+    private function calculateContentStats(string $content): array
+    {
+        $characterCount = strlen($content);
+        $wordCount = str_word_count($content);
+        $paragraphCount = count(array_filter(explode("\n", $content), 'trim'));
+        
+        // Estimation du temps de lecture (200-250 mots par minute en moyenne)
+        $readingTimeMinutes = ceil($wordCount / 225);
+        
+        // Compter les phrases (approximatif)
+        $sentenceCount = preg_match_all('/[.!?]+/', $content);
+        
+        return [
+            'characterCount' => $characterCount,
+            'characterCountWithSpaces' => $characterCount,
+            'characterCountWithoutSpaces' => strlen(preg_replace('/\s/', '', $content)),
+            'wordCount' => $wordCount,
+            'paragraphCount' => $paragraphCount,
+            'sentenceCount' => $sentenceCount,
+            'readingTimeMinutes' => $readingTimeMinutes,
+            'readingTimeFormatted' => $this->formatReadingTime($readingTimeMinutes),
+            'averageWordsPerParagraph' => $paragraphCount > 0 ? round($wordCount / $paragraphCount, 1) : 0,
+            'averageWordsPerSentence' => $sentenceCount > 0 ? round($wordCount / $sentenceCount, 1) : 0
+        ];
+    }
+
+    private function formatReadingTime(int $minutes): string
+    {
+        if ($minutes < 60) {
+            return $minutes . ' min';
+        }
+        
+        $hours = floor($minutes / 60);
+        $remainingMinutes = $minutes % 60;
+        
+        if ($remainingMinutes === 0) {
+            return $hours . 'h';
+        }
+        
+        return $hours . 'h ' . $remainingMinutes . 'min';
+    }
 }

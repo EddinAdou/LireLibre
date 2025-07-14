@@ -108,7 +108,7 @@ const SearchPage: React.FC = () => {
                   placeholder="Rechercher des histoires, auteurs, mots-clés..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="input-white-large w-full pl-12 pr-4"
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ const SearchPage: React.FC = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as StoryCategory | 'Tout')}
-              className="px-4 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="select-white-large"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -127,7 +127,7 @@ const SearchPage: React.FC = () => {
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="border border-gray-300 text-gray-700 px-6 py-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+              className="btn-black-large flex items-center"
             >
               <Filter className="h-5 w-5 mr-2" />
               Filtres
@@ -142,7 +142,7 @@ const SearchPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Longueur
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <select className="select-white w-full">
                     <option value="">Toutes</option>
                     <option value="short">Court (moins de 1000 mots)</option>
                     <option value="medium">Moyen (1000-5000 mots)</option>
@@ -153,7 +153,7 @@ const SearchPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Langue
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <select className="select-white w-full">
                     <option value="">Toutes</option>
                     <option value="fr">Français</option>
                     <option value="en">Anglais</option>
@@ -164,7 +164,7 @@ const SearchPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Date de publication
                   </label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <select className="select-white w-full">
                     <option value="">Toutes</option>
                     <option value="week">Cette semaine</option>
                     <option value="month">Ce mois</option>
@@ -189,7 +189,7 @@ const SearchPage: React.FC = () => {
             {(searchTerm || selectedCategory !== 'Tout') && (
               <button
                 onClick={clearSearch}
-                className="text-blue-600 hover:text-blue-800 font-medium"
+                className="btn-black-small"
               >
                 Effacer la recherche
               </button>

@@ -1,0 +1,312 @@
+.story-reader {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.story-reader-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  padding: 1rem;
+}
+
+.story-reader-header-content {
+  max-width: 64rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.story-reader-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.story-reader-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+}
+
+.progress-bar {
+  width: 8rem;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  height: 0.5rem;
+}
+
+.progress-fill {
+  background-color: #2563eb;
+  height: 0.5rem;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+}
+
+.progress-text {
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.bookmark-button {
+  background-color: #000000;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #000000;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bookmark-button:hover {
+  background-color: #1f2937;
+}
+
+.bookmark-button:focus {
+  outline: 2px solid #6b7280;
+  outline-offset: 2px;
+}
+
+.story-content {
+  padding-top: 5rem;
+}
+
+.story-text {
+  font-size: 18px;
+  line-height: 1.8;
+  font-family: Georgia, serif;
+  max-width: none;
+}
+
+.story-paragraph {
+  margin-bottom: 1rem;
+  line-height: 1.75;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 50%;
+  height: 2rem;
+  width: 2rem;
+  border: 2px solid transparent;
+  border-bottom-color: #2563eb;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-left: 0.5rem;
+}
+
+.bookmarks-sidebar {
+  position: fixed;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  max-width: 18rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.bookmarks-title {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.bookmarks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bookmark-item {
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.bookmark-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.bookmark-link {
+  text-align: left;
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.bookmark-link:hover {
+  color: #2563eb;
+}
+
+.bookmark-title {
+  font-weight: 500;
+}
+
+.bookmark-excerpt {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.bookmark-delete {
+  color: #ef4444;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.bookmark-delete:hover {
+  color: #dc2626;
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.dialog-content {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 1rem;
+}
+
+.dialog-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.dialog-field {
+  margin-bottom: 1rem;
+}
+
+.dialog-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.dialog-selected-text {
+  background-color: #f3f4f6;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.dialog-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #000000;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.dialog-input:focus {
+  outline: 2px solid #6b7280;
+  border-color: transparent;
+}
+
+.dialog-input::placeholder {
+  color: #6b7280;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.dialog-button-cancel {
+  padding: 0.5rem 1rem;
+  color: #000000;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.dialog-button-cancel:hover {
+  background-color: #f3f4f6;
+}
+
+.dialog-button-cancel:focus {
+  outline: 2px solid #6b7280;
+  outline-offset: 2px;
+}
+
+.dialog-button-confirm {
+  padding: 0.5rem 1rem;
+  background-color: #000000;
+  color: white;
+  border: 1px solid #000000;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.dialog-button-confirm:hover {
+  background-color: #1f2937;
+}
+
+.dialog-button-confirm:focus {
+  outline: 2px solid #6b7280;
+  outline-offset: 2px;
+}

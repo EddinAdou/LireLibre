@@ -244,10 +244,6 @@ const WritePageClean: React.FC = () => {
     ? 'bg-gray-800 border-gray-700' 
     : 'bg-white border-gray-200';
 
-  const inputClasses = isDarkMode 
-    ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-400 focus:border-blue-400' 
-    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500';
-
   const containerClasses = isFullScreen 
     ? 'fixed inset-0 z-50' 
     : 'min-h-screen';
@@ -261,7 +257,7 @@ const WritePageClean: React.FC = () => {
             {!isFullScreen && (
               <button
                 onClick={() => navigate('/dashboard')}
-                className={`flex items-center gap-2 px-3 py-2 ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-black hover:bg-gray-100'} rounded-lg transition-colors`}
+                className="btn-black-small flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Retour
@@ -286,7 +282,7 @@ const WritePageClean: React.FC = () => {
             {/* Bouton Outils d'écriture */}
             <button
               onClick={() => setShowWritingTools(!showWritingTools)}
-              className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} ${showWritingTools ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-100') : ''}`}
+              className="btn-icon p-2"
               title="Outils d'aide à l'écriture"
             >
               <Type className="h-4 w-4" />
@@ -296,11 +292,7 @@ const WritePageClean: React.FC = () => {
             <button
               onClick={() => setShowPreview(!showPreview)}
               disabled={!story.content.trim()}
-              className={`flex items-center gap-2 px-3 py-2 ${
-                showPreview 
-                  ? (isDarkMode ? 'bg-blue-700 text-blue-200 hover:bg-blue-600' : 'bg-blue-100 text-blue-700 hover:bg-blue-200')
-                  : (isDarkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-              } rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+              className="btn-black flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               title={showPreview ? 'Fermer l\'aperçu' : 'Voir l\'aperçu'}
             >
               <Eye className="h-4 w-4" />
@@ -310,7 +302,7 @@ const WritePageClean: React.FC = () => {
             {/* Boutons mode sombre et plein écran */}
             <button
               onClick={toggleDarkMode}
-              className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              className="btn-icon p-2"
               title={isDarkMode ? 'Mode clair' : 'Mode sombre'}
             >
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -318,7 +310,7 @@ const WritePageClean: React.FC = () => {
             
             <button
               onClick={toggleFullScreen}
-              className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              className="btn-icon p-2"
               title={isFullScreen ? 'Quitter plein écran' : 'Mode plein écran'}
             >
               {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -598,7 +590,7 @@ const WritePageClean: React.FC = () => {
                   value={story.title}
                   onChange={(e) => setStory(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="Donnez un titre captivant à votre histoire..."
-                  className={`w-full px-4 py-3 text-lg rounded-lg transition-all ${inputClasses}`}
+                  className="input-white-large w-full"
                   style={{ 
                     direction: 'ltr', 
                     textAlign: 'left',
@@ -617,7 +609,7 @@ const WritePageClean: React.FC = () => {
                   onChange={(e) => setStory(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Décrivez brièvement votre histoire pour attirer les lecteurs..."
                   rows={4}
-                  className={`w-full px-4 py-3 rounded-lg resize-none transition-all ${inputClasses}`}
+                  className="input-white w-full resize-none"
                   style={{ 
                     direction: 'ltr', 
                     textAlign: 'left',
@@ -678,7 +670,7 @@ Commencez à écrire votre histoire ici. Laissez libre cours à votre imaginatio
 Utilisez les outils d'aide à l'écriture pour vous inspirer et formater votre texte.`
                 }
                 rows={isFullScreen ? undefined : 25}
-                className={`w-full px-4 py-4 text-base leading-relaxed rounded-lg resize-none transition-all ${inputClasses} ${isFullScreen ? 'flex-1 h-full min-h-0' : ''}`}
+                className={`input-white w-full resize-none text-base leading-relaxed ${isFullScreen ? 'flex-1 h-full min-h-0' : ''}`}
                 style={{ 
                   direction: 'ltr', 
                   textAlign: 'left',

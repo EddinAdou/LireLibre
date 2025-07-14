@@ -59,11 +59,4 @@ class ApplicationTest extends KernelTestCase
         // Test passes
         $this->assertTrue(true);
     }
-
-    private function assertTrue(bool $condition): void
-    {
-        if (!$condition) {
-            throw new \Exception("Assertion failed: expected true");
-        }
-    }
 }
