@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Download, Book, Globe, Users, Calendar, Import } from 'lucide-react';
 import { externalStoriesService } from '../services/externalStoriesService';
 import { GutenbergBook, OpenLibraryWork, ExternalStoryImport } from '../types/story';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SearchResult {
   id: string;
@@ -23,6 +24,7 @@ interface SearchResult {
 
 const ImportPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSource, setSelectedSource] = useState<'all' | 'gutenberg' | 'openlibrary' | 'wikisource'>('all');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -144,19 +146,20 @@ const ImportPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* En-tête */}
-      <div className="bg-white border-b border-gray-200">
+      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <button
                 onClick={() => navigate('/stories')}
-                className="text-gray-500 hover:text-gray-700 mr-4"
+                className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} mr-4`}
+                title="Retourner aux histoires"
               >
                 <ArrowLeft className="h-6 w-6" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 Importer des histoires
               </h1>
             </div>
@@ -166,9 +169,9 @@ const ImportPage: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Informations sur l'importation */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+        <div className={`${isDarkMode ? 'bg-blue-900 border-blue-700' : 'bg-blue-50 border-blue-200'} border rounded-lg p-6 mb-8`}>
           <div className="flex items-start">
-            <Import className="h-6 w-6 text-blue-600 mr-3 mt-1" />
+            <Import className={`h-6 w-6 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} mr-3 mt-1`} />
             <div>
               <h3 className="text-lg font-semibold text-blue-900 mb-2">
                 Importation légale de contenu
@@ -197,7 +200,7 @@ const ImportPage: React.FC = () => {
         </div>
 
         {/* Barre de recherche */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6 mb-8`}>
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
               <div className="flex-1">
@@ -209,7 +212,7 @@ const ImportPage: React.FC = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="input-white-large w-full pl-10 pr-4"
+                    className="input-white-large w-full pl-12 pr-4"
                   />
                 </div>
               </div>
@@ -262,11 +265,11 @@ const ImportPage: React.FC = () => {
               {searchResults.map((result) => {
                 const SourceIcon = getSourceIcon(result.source);
                 return (
-                  <div key={result.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div key={result.id} className={`${isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:shadow-md'} rounded-lg shadow-sm p-6 transition-shadow`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center mb-2">
-                          <h4 className="text-lg font-semibold text-gray-900 mr-3">
+                          <h4 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mr-3`}>
                             {result.title}
                           </h4>
                           <span className={`px-2 py-1 rounded text-xs font-medium ${getSourceColor(result.source)}`}>

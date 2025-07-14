@@ -9,9 +9,11 @@ import { Book, Plus, Search, Filter, Download, Edit, Eye, Trash2 } from 'lucide-
 import { toast } from 'react-hot-toast';
 import { Story, StoryFilters, StoryCategory } from '../types/story';
 import { storiesService } from '../services/storiesService';
+import { useTheme } from '../contexts/ThemeContext';
 
 const StoriesPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<StoryFilters>({});
@@ -245,14 +247,14 @@ const StoriesPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className={`min-h-screen py-8 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* En-tête */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center mb-4 sm:mb-0">
-              <Book className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-3xl font-bold text-gray-900">Mes Histoires</h1>
+              <Book className={`h-8 w-8 mr-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Mes Histoires</h1>
             </div>
             <div className="flex space-x-3">
               <button
@@ -274,7 +276,7 @@ const StoriesPage: React.FC = () => {
         </div>
 
         {/* Barre de recherche et filtres */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className={`rounded-lg shadow-sm p-6 mb-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
             <div className="flex-1">
               <div className="relative">
@@ -285,7 +287,7 @@ const StoriesPage: React.FC = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="input-white w-full pl-10 pr-4"
+                  className="input-white w-full pl-12 pr-4"
                 />
               </div>
             </div>
@@ -339,7 +341,7 @@ const StoriesPage: React.FC = () => {
                   <select
                     value={filters.language || ''}
                     onChange={(e) => setFilters({ ...filters, language: e.target.value || undefined })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="select-white w-full"
                   >
                     <option value="">Toutes les langues</option>
                     <option value="fr">Français</option>
@@ -356,7 +358,7 @@ const StoriesPage: React.FC = () => {
                   <select
                     value={filters.sortBy || 'createdAt'}
                     onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="select-white w-full"
                   >
                     <option value="createdAt">Date de création</option>
                     <option value="updatedAt">Dernière modification</option>
@@ -373,7 +375,7 @@ const StoriesPage: React.FC = () => {
                   <select
                     value={filters.sortOrder || 'desc'}
                     onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value as 'asc' | 'desc' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="select-white w-full"
                   >
                     <option value="desc">Décroissant</option>
                     <option value="asc">Croissant</option>

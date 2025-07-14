@@ -9,10 +9,12 @@ import { Search, Filter, Book, User, Calendar, Tag, Eye } from 'lucide-react';
 import { Story, StoryFilters, StoryCategory } from '../types/story';
 import { storiesService } from '../services/storiesService';
 import { toast } from 'react-hot-toast';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SearchPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isDarkMode } = useTheme();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
@@ -85,20 +87,20 @@ const SearchPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} py-8`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* En-tête */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
             Découvrez des histoires incroyables
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className={`text-xl ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
             Explorez notre collection d'histoires écrites par notre communauté d'auteurs talentueux
           </p>
         </div>
 
         {/* Barre de recherche principale */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} rounded-xl shadow-lg p-6 mb-8`}>
           <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
             <div className="flex-1">
               <div className="relative">
@@ -108,7 +110,7 @@ const SearchPage: React.FC = () => {
                   placeholder="Rechercher des histoires, auteurs, mots-clés..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input-white-large w-full pl-12 pr-4"
+                  className="input-white-large w-full pl-14 pr-4"
                 />
               </div>
             </div>
@@ -209,15 +211,15 @@ const SearchPage: React.FC = () => {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3 mb-4"></div>
+              <div key={index} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm p-6 animate-pulse`}>
+                <div className={`h-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-3/4 mb-4`}></div>
+                <div className={`h-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-full mb-2`}></div>
+                <div className={`h-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-2/3 mb-4`}></div>
                 <div className="flex space-x-2 mb-4">
-                  <div className="h-6 bg-gray-200 rounded w-16"></div>
-                  <div className="h-6 bg-gray-200 rounded w-20"></div>
+                  <div className={`h-6 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-16`}></div>
+                  <div className={`h-6 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-20`}></div>
                 </div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                <div className={`h-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-1/2`}></div>
               </div>
             ))}
           </div>
@@ -227,20 +229,20 @@ const SearchPage: React.FC = () => {
               <div
                 key={story.id}
                 onClick={() => handleStoryClick(story)}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer p-6 group"
+                className={`${isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:shadow-md'} rounded-lg shadow-sm transition-shadow cursor-pointer p-6 group`}
               >
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                  <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white group-hover:text-blue-400' : 'text-gray-900 group-hover:text-blue-600'} transition-colors line-clamp-2`}>
                     {story.title}
                   </h3>
-                  <Book className="h-5 w-5 text-gray-400 flex-shrink-0 ml-2" />
+                  <Book className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'} flex-shrink-0 ml-2`} />
                 </div>
                 
-                <p className="text-gray-600 text-sm line-clamp-3 mb-4">
+                <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm line-clamp-3 mb-4`}>
                   {story.description || story.content?.substring(0, 150) + '...'}
                 </p>
                 
-                <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                <div className={`flex items-center justify-between text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3`}>
                   <div className="flex items-center">
                     <User className="h-4 w-4 mr-1" />
                     <span>{story.author?.name || 'Anonyme'}</span>
