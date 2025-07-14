@@ -154,6 +154,7 @@ const StorySearch: React.FC = () => {
           value={filters.sortBy}
           onChange={(e) => setFilters({...filters, sortBy: e.target.value})}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-manrope"
+          title="Trier les histoires"
         >
           <option value="recent">Plus récentes</option>
           <option value="popular">Plus populaires</option>
@@ -183,6 +184,7 @@ const StorySearch: React.FC = () => {
                 value={filters.genre}
                 onChange={(e) => setFilters({...filters, genre: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-manrope"
+                title="Filtrer par genre"
               >
                 <option value="">Tous les genres</option>
                 <option value="Fantastique">Fantastique</option>
@@ -202,6 +204,7 @@ const StorySearch: React.FC = () => {
                 value={filters.status}
                 onChange={(e) => setFilters({...filters, status: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-manrope"
+                title="Filtrer par statut"
               >
                 <option value="">Tous les statuts</option>
                 <option value="En cours">En cours</option>

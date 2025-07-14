@@ -119,6 +119,7 @@ const SearchPage: React.FC = () => {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as StoryCategory | 'Tout')}
               className="select-white-large"
+              title="Sélectionner une catégorie"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -144,7 +145,7 @@ const SearchPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Longueur
                   </label>
-                  <select className="select-white w-full">
+                  <select className="select-white w-full" title="Filtrer par longueur">
                     <option value="">Toutes</option>
                     <option value="short">Court (moins de 1000 mots)</option>
                     <option value="medium">Moyen (1000-5000 mots)</option>
@@ -155,7 +156,7 @@ const SearchPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Langue
                   </label>
-                  <select className="select-white w-full">
+                  <select className="select-white w-full" title="Filtrer par langue">
                     <option value="">Toutes</option>
                     <option value="fr">Français</option>
                     <option value="en">Anglais</option>
@@ -166,7 +167,7 @@ const SearchPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Date de publication
                   </label>
-                  <select className="select-white w-full">
+                  <select className="select-white w-full" title="Filtrer par date de publication">
                     <option value="">Toutes</option>
                     <option value="week">Cette semaine</option>
                     <option value="month">Ce mois</option>

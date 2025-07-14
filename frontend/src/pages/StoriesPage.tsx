@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import { Book, Plus, Search, Filter, Download, Edit, Eye, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Story, StoryFilters, StoryCategory } from '../types/story';
-import { storiesService } from '../services/storiesService';
 import { useTheme } from '../contexts/ThemeContext';
 
 const StoriesPage: React.FC = () => {
@@ -296,6 +295,7 @@ const StoriesPage: React.FC = () => {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as StoryCategory | 'Tout')}
               className="select-white"
+              title="Filtrer par catégorie"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -342,6 +342,7 @@ const StoriesPage: React.FC = () => {
                     value={filters.language || ''}
                     onChange={(e) => setFilters({ ...filters, language: e.target.value || undefined })}
                     className="select-white w-full"
+                    title="Filtrer par langue"
                   >
                     <option value="">Toutes les langues</option>
                     <option value="fr">Français</option>
@@ -359,6 +360,7 @@ const StoriesPage: React.FC = () => {
                     value={filters.sortBy || 'createdAt'}
                     onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
                     className="select-white w-full"
+                    title="Trier les histoires"
                   >
                     <option value="createdAt">Date de création</option>
                     <option value="updatedAt">Dernière modification</option>
@@ -376,6 +378,7 @@ const StoriesPage: React.FC = () => {
                     value={filters.sortOrder || 'desc'}
                     onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value as 'asc' | 'desc' })}
                     className="select-white w-full"
+                    title="Ordre de tri"
                   >
                     <option value="desc">Décroissant</option>
                     <option value="asc">Croissant</option>
