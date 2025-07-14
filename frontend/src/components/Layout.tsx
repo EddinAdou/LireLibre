@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, PenTool, LogOut, Menu, Users, Mail, Search, Moon, Sun } from 'lucide-react';
+import { BookOpen, PenTool, LogOut, Menu, Users, Mail, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import UserAvatar from './ui/UserAvatar';
