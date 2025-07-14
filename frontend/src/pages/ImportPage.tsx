@@ -209,7 +209,7 @@ const ImportPage: React.FC = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="input-white-large w-full pl-10 pr-4"
                   />
                 </div>
               </div>
@@ -217,7 +217,7 @@ const ImportPage: React.FC = () => {
               <button
                 onClick={handleSearch}
                 disabled={loading}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50"
+                className="btn-black-large flex items-center disabled:opacity-50"
               >
                 <Search className="h-5 w-5 mr-2" />
                 {loading ? 'Recherche...' : 'Rechercher'}
@@ -301,7 +301,7 @@ const ImportPage: React.FC = () => {
                       <button
                         onClick={() => handleImport(result)}
                         disabled={importing === result.id}
-                        className="ml-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center disabled:opacity-50"
+                        className="ml-4 btn-black flex items-center disabled:opacity-50"
                       >
                         {importing === result.id ? (
                           <>

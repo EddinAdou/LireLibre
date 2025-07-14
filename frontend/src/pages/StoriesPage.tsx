@@ -257,14 +257,14 @@ const StoriesPage: React.FC = () => {
             <div className="flex space-x-3">
               <button
                 onClick={() => navigate('/stories/write')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                className="btn-black flex items-center"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Écrire une histoire
               </button>
               <button
                 onClick={() => navigate('/stories/import')}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                className="btn-black flex items-center"
               >
                 <Download className="h-5 w-5 mr-2" />
                 Importer
@@ -285,7 +285,7 @@ const StoriesPage: React.FC = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="input-white w-full pl-10 pr-4"
                 />
               </div>
             </div>
@@ -293,7 +293,7 @@ const StoriesPage: React.FC = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as StoryCategory | 'Tout')}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="select-white"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -304,7 +304,7 @@ const StoriesPage: React.FC = () => {
 
             <button
               onClick={handleSearch}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+              className="btn-black-large flex items-center"
             >
               <Search className="h-5 w-5 mr-2" />
               Rechercher
@@ -313,7 +313,7 @@ const StoriesPage: React.FC = () => {
             {(searchTerm || selectedCategory !== 'Tout') && (
               <button
                 onClick={clearSearch}
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="btn-black"
               >
                 Effacer
               </button>
@@ -321,7 +321,7 @@ const StoriesPage: React.FC = () => {
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+              className="btn-black flex items-center"
             >
               <Filter className="h-5 w-5 mr-2" />
               Filtres
@@ -424,14 +424,14 @@ const StoriesPage: React.FC = () => {
             <div className="flex justify-center space-x-4">
               <button
                 onClick={() => navigate('/stories/write')}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                className="btn-black-large flex items-center"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Écrire une histoire
               </button>
               <button
                 onClick={() => navigate('/stories/import')}
-                className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                className="btn-black-large flex items-center"
               >
                 <Download className="h-5 w-5 mr-2" />
                 Importer du contenu
