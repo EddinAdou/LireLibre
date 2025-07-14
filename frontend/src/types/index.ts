@@ -14,12 +14,18 @@ export interface Story {
   id: number;
   title: string;
   content: string;
+  description?: string;
   summary?: string;
   genre: string;
+  status?: string;
   coverImage?: string;
   isPublished: boolean;
   viewCount: number;
   likeCount: number;
+  word_count?: number;
+  character_count?: number;
+  reading_time?: number;
+  language?: string;
   author: User;
   createdAt: string;
   updatedAt: string;

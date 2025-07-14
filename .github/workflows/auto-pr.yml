@@ -1,0 +1,105 @@
+name: 🔄 Auto PR Creation
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Nom de la branche pour laquelle créer une PR'
+        required: true
+        type: string
+      target_branch:
+        description: 'Branche cible (develop par défaut)'
+        required: false
+        default: 'develop'
+        type: string
+
+jobs:
+  create-pr:
+    name: 🤖 Création automatique de PR
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.branch_name }}
+
+      - name: 🎯 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📝 Analyser les commits
+        id: analyze
+        run: |
+          # Analyser les commits pour générer le titre et la description
+          COMMITS=$(git log ${{ inputs.target_branch }}..${{ inputs.branch_name }} --oneline)
+          
+          if [ -z "$COMMITS" ]; then
+            echo "❌ Aucun commit trouvé"
+            exit 1
+          fi
+          
+          # Extraire le type principal
+          MAIN_TYPE=$(echo "$COMMITS" | head -1 | sed -n 's/^[a-f0-9]* \([a-z]*\).*/\1/p')
+          
+          # Générer le titre
+          TITLE="${MAIN_TYPE}(${{ inputs.branch_name }}): $(echo '${{ inputs.branch_name }}' | sed 's/feature\///;s/bugfix\///;s/-/ /g')"
+          
+          # Générer la description
+          cat > pr_description.md << 'EOF'
+          ## 📋 Description
+
+          Cette PR contient les changements suivants :
+
+          EOF
+          
+          echo "$COMMITS" | sed 's/^[a-f0-9]* /- /' >> pr_description.md
+          
+          cat >> pr_description.md << 'EOF'
+
+          ## 🧪 Tests
+
+          - [x] Code vérifié localement
+          - [x] Messages de commit conventionnels
+          - [ ] Tests manuels effectués
+          - [ ] Documentation mise à jour si nécessaire
+
+          ## 📝 Type de changement
+
+          - [ ] 🐛 Bug fix
+          - [ ] ✨ Nouvelle feature  
+          - [ ] 💥 Breaking change
+          - [ ] 📚 Documentation
+
+          ## 🔍 Checklist
+
+          - [x] Code suit les conventions du projet
+          - [x] Self-review effectuée
+          - [x] Pipeline CI/CD passe
+          - [ ] Tests additionnels si nécessaire
+          EOF
+          
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "description<<EOF" >> $GITHUB_OUTPUT
+          cat pr_description.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Créer la Pull Request
+        run: |
+          # Utiliser GitHub CLI pour créer la PR
+          gh pr create \
+            --title "${{ steps.analyze.outputs.title }}" \
+            --body-file pr_description.md \
+            --base ${{ inputs.target_branch }} \
+            --head ${{ inputs.branch_name }} \
+            --label "automated-pr,needs-review"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📢 Résultat
+        run: |
+          echo "✅ Pull Request créée avec succès !"
+          echo "📋 Titre: ${{ steps.analyze.outputs.title }}"
+          echo "🎯 Vers: ${{ inputs.target_branch }}"

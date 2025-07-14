@@ -1,0 +1,40 @@
+#!/bin/sh
+# Pre-push hook pour LireLibre
+
+# Couleurs
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo "${BLUE}🛡️ Pre-push validation en cours...${NC}"
+
+# Exécuter le script de validation
+if command -v node &> /dev/null; then
+    node scripts/pre-push-check.js
+    exit_code=$?
+    
+    if [ $exit_code -eq 0 ]; then
+        echo "${GREEN}✅ Validation réussie - Push autorisé${NC}"
+        exit 0
+    else
+        echo "${RED}❌ Validation échouée - Push bloqué${NC}"
+        echo "${YELLOW}Corrigez les problèmes et réessayez${NC}"
+        exit 1
+    fi
+else
+    echo "${YELLOW}⚠️ Node.js non disponible - validation basique${NC}"
+    
+    # Vérification basique des messages de commit
+    current_branch=$(git branch --show-current)
+    
+    if [ "$current_branch" = "main" ]; then
+        echo "${RED}❌ Push direct vers main interdit${NC}"
+        echo "${YELLOW}Utilisez une Pull Request${NC}"
+        exit 1
+    fi
+    
+    echo "${GREEN}✅ Vérifications basiques OK${NC}"
+    exit 0
+fi

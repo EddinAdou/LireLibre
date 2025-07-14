@@ -8,9 +8,13 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
+#[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée.')]
+#[UniqueEntity(fields: ['username'], message: 'Ce nom d\'utilisateur est déjà pris.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -21,18 +25,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
+    #[Assert\NotBlank(message: 'L\'email est obligatoire.')]
+    #[Assert\Email(message: 'L\'email n\'est pas valide.')]
+    #[Assert\Length(max: 180, maxMessage: 'L\'email ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $email = null;
 
     #[ORM\Column(type: 'string', length: 50, unique: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
+    #[Assert\NotBlank(message: 'Le nom d\'utilisateur est obligatoire.')]
+    #[Assert\Length(
+        min: 3, 
+        max: 20, 
+        minMessage: 'Le nom d\'utilisateur doit contenir au moins {{ limit }} caractères.',
+        maxMessage: 'Le nom d\'utilisateur ne peut pas dépasser {{ limit }} caractères.'
+    )]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-Z0-9_]+$/',
+        message: 'Le nom d\'utilisateur ne peut contenir que des lettres, chiffres et tirets bas.'
+    )]
     private ?string $username = null;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
+    #[Assert\Length(max: 100, maxMessage: 'Le prénom ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $firstName = null;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     #[Groups(['user:read', 'user:write', 'story:read'])]
+    #[Assert\Length(max: 100, maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $lastName = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
@@ -42,6 +62,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'text', nullable: true)]
     #[Groups(['user:read', 'user:write'])]
     private ?string $bio = null;
+
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    #[Groups(['user:read', 'user:write'])]
+    private ?string $location = null;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['user:read', 'user:write'])]
+    #[Assert\Url(message: 'L\'URL du site web n\'est pas valide.')]
+    private ?string $website = null;
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    #[Groups(['user:read', 'user:write'])]
+    private ?\DateTimeInterface $birthDate = null;
 
     #[ORM\Column(type: 'json')]
     private array $roles = [];
@@ -146,6 +179,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getLocation(): ?string
+    {
+        return $this->location;
+    }
+
+    public function setLocation(?string $location): static
+    {
+        $this->location = $location;
+        return $this;
+    }
+
+    public function getWebsite(): ?string
+    {
+        return $this->website;
+    }
+
+    public function setWebsite(?string $website): static
+    {
+        $this->website = $website;
+        return $this;
+    }
+
+    public function getBirthDate(): ?\DateTimeInterface
+    {
+        return $this->birthDate;
+    }
+
+    public function setBirthDate(?\DateTimeInterface $birthDate): static
+    {
+        $this->birthDate = $birthDate;
+        return $this;
+    }
+
     /**
      * A visual identifier that represents this user.
      *
@@ -153,7 +219,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string) $this->username;
     }
 
     /**

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LireLibre - Toutes les Corrections</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // État global de l'application
+        let state = {
+            isDarkMode: localStorage.getItem('lirelibre-theme') === 'dark',
+            currentPage: 'stories',
+            showPreview: false,
+            stories: [
+                {
+                    id: '1',
+                    title: 'Les Aventures de Clara',
+                    description: 'Une jeune fille découvre un monde magique caché derrière son miroir.',
+                    content: '# Chapitre 1 : Le Miroir Mystérieux\n\nClara avait toujours trouvé son miroir étrange...',
+                    category: 'Fantasy',
+                    status: 'published',
+                    isPublished: true,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    author: 'TestUser',
+                    tags: ['aventure', 'magie'],
+                    views: 156,
+                    likes: 24,
+                    wordCount: 3247,
+                    readingTime: 15
+                },
+                {
+                    id: '2',
+                    title: 'Mystère à la Bibliothèque',
+                    description: 'Un bibliothécaire découvre que certains livres cachent des secrets millénaires.',
+                    content: '# Prologue\n\nLa vieille bibliothèque gardait ses secrets...',
+                    category: 'Mystère',
+                    status: 'draft',
+                    isPublished: false,
+                    createdAt: new Date(Date.now() - 86400000),
+                    updatedAt: new Date(Date.now() - 3600000),
+                    author: 'TestUser',
+                    tags: ['mystère', 'livre'],
+                    views: 89,
+                    likes: 12,
+                    wordCount: 5234,
+                    readingTime: 25
+                }
+            ],
+            currentStory: null,
+            writeStory: {
+                title: '',
+                description: '',
+                content: '',
+                status: 'draft'
+            }
+        };
+
+        // Appliquer le thème au démarrage
+        if (state.isDarkMode) {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Fonctions utilitaires
+        function toggleDarkMode() {
+            state.isDarkMode = !state.isDarkMode;
+            
+            if (state.isDarkMode) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('lirelibre-theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('lirelibre-theme', 'light');
+            }
+            render();
+        }
+
+        function setCurrentPage(page, data = null) {
+            state.currentPage = page;
+            if (data) {
+                state.currentStory = data;
+            }
+            render();
+        }
+
+        function formatDate(date) {
+            const now = new Date();
+            const diffMs = now.getTime() - date.getTime();
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                if (diffHours === 0) {
+                    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                    return diffMinutes <= 0 ? 'À l\'instant' : `Il y a ${diffMinutes} min`;
+                }
+                return `Il y a ${diffHours}h`;
+            } else if (diffDays === 1) {
+                return 'Hier';
+            } else if (diffDays < 7) {
+                return `Il y a ${diffDays} jours`;
+            } else {
+                return date.toLocaleDateString('fr-FR');
+            }
+        }
+
+        function deleteStory(storyId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette histoire ?')) {
+                state.stories = state.stories.filter(story => story.id !== storyId);
+                alert('✅ Histoire supprimée avec succès !');
+                render();
+            }
+        }
+
+        function viewStory(storyId) {
+            const story = state.stories.find(s => s.id === storyId);
+            if (!story) {
+                alert('❌ Histoire introuvable');
+                return;
+            }
+            setCurrentPage('view', story);
+        }
+
+        function editStory(storyId) {
+            const story = state.stories.find(s => s.id === storyId);
+            if (!story) {
+                alert('❌ Histoire introuvable');
+                return;
+            }
+            state.writeStory = { ...story };
+            setCurrentPage('write');
+        }
+
+        function likeStory(storyId) {
+            const story = state.stories.find(s => s.id === storyId);
+            if (story) {
+                story.likes += 1;
+                alert('❤️ Histoire ajoutée aux favoris !');
+                render();
+            }
+        }
+
+        function formatContentForPreview(content) {
+            return content
+                .replace(/^#### (.*$)/gim, '<h4 class="text-lg font-semibold mt-6 mb-3 text-red-600">$1</h4>')
+                .replace(/^### (.*$)/gim, '<h3 class="text-xl font-semibold mt-8 mb-4 text-green-600">$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-semibold mt-10 mb-6 text-purple-600">$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-12 mb-8 text-blue-600 border-b-2 border-blue-600 pb-3">$1</h1>')
+                .replace(/\\*\\*(.*?)\\*\\*/g, '<strong class="font-semibold">$1</strong>')
+                .replace(/\\*(.*?)\\*/g, '<em class="italic">$1</em>')
+                .replace(/__(.*?)__/g, '<u class="underline">$1</u>')
+                .replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-gray-300 pl-4 italic my-4">$1</blockquote>')
+                .replace(/^\\* \\* \\*$/gim, '<hr class="my-8 border-t-2 border-gray-200">')
+                .replace(/\\n\\n/g, '</p><p class="mb-4">')
+                .replace(/\\n/g, '<br>');
+        }
+
+        // Composant Header
+        function renderHeader() {
+            const { isDarkMode, currentPage } = state;
+            
+            return `
+                <header class="${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-50 backdrop-blur-sm">
+                    <div class="max-w-7xl mx-auto px-4 py-4">
+                        <div class="flex justify-between items-center">
+                            <!-- Logo -->
+                            <div onclick="setCurrentPage('stories')" class="flex items-center space-x-3 cursor-pointer group">
+                                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg viewBox="0 0 24 24" class="w-5 h-5 text-white">
+                                        <path fill="currentColor" d="M21,5c-1.11-0.35-2.33-0.5-3.5-0.5c-1.95,0-4.05,0.4-5.5,1.5c-1.45-1.1-3.55-1.5-5.5-1.5 C5.33,4.5,4.11,4.65,3,5v14.65c0,0.25,0.25,0.5,0.5,0.5c0.1,0,0.15-0.05,0.25-0.05c0.85-0.3,2.1-0.5,3.25-0.5 c1.85,0,3.85,0.4,5,1.5c1.15-1.1,3.15-1.5,5-1.5c1.15,0,2.4,0.2,3.25,0.5c0.1,0.05,0.15,0.05,0.25,0.05c0.25,0,0.5-0.25,0.5-0.5V5 z M12,15.5c-1.45-1.1-3.55-1.5-5.5-1.5c-1.05,0-2.05,0.15-3,0.5V7c0.95-0.35,1.95-0.5,3-0.5c1.95,0,4.05,0.4,5.5,1.5V15.5z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}">LireLibre</span>
+                            </div>
+
+                            <!-- Navigation -->
+                            <nav class="flex items-center space-x-4">
+                                <button onclick="setCurrentPage('stories')" class="px-4 py-2 rounded-xl text-sm font-medium transition-all ${currentPage === 'stories' ? 'bg-blue-600 text-white' : (isDarkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600')}">
+                                    📚 Mes Histoires
+                                </button>
+                                <button onclick="setCurrentPage('write')" class="px-4 py-2 rounded-xl text-sm font-medium transition-all ${currentPage === 'write' ? 'bg-purple-600 text-white' : (isDarkMode ? 'text-gray-300 hover:text-purple-400' : 'text-gray-600 hover:text-purple-600')}">
+                                    ✍️ Écrire
+                                </button>
+                                
+                                <!-- Mode sombre -->
+                                <button onclick="toggleDarkMode()" class="p-2 rounded-lg transition-colors ${isDarkMode ? 'text-yellow-400 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}" title="${isDarkMode ? 'Mode clair' : 'Mode sombre'}">
+                                    ${isDarkMode ? 
+                                        '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>' :
+                                        '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>'
+                                    }
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                </header>
+            `;
+        }
+
+        // Composant Stories Page
+        function renderStoriesPage() {
+            const { isDarkMode, stories } = state;
+            
+            return `
+                <div class="max-w-6xl mx-auto px-4 py-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <h1 class="text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}">
+                            📚 Mes Histoires Actualisées
+                        </h1>
+                        <button onclick="setCurrentPage('write')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+                            ✨ Nouvelle histoire
+                        </button>
+                    </div>
+
+                    <!-- Grille des histoires -->
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${stories.map(story => `
+                            <div class="${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
+                                <div class="p-6">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <h3 class="text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} line-clamp-2">
+                                            ${story.title}
+                                        </h3>
+                                        <div class="flex space-x-1 ml-2">
+                                            <button onclick="viewStory('${story.id}')" class="text-blue-600 hover:text-blue-800 p-1" title="Consulter l'histoire">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            </button>
+                                            <button onclick="editStory('${story.id}')" class="text-yellow-600 hover:text-yellow-800 p-1" title="Modifier l'histoire">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                            </button>
+                                            <button onclick="deleteStory('${story.id}')" class="text-red-600 hover:text-red-800 p-1" title="Supprimer l'histoire">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <p class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-sm mb-4 line-clamp-3">
+                                        ${story.description}
+                                    </p>
+                                    
+                                    <div class="flex items-center justify-between text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-3">
+                                        <span>${story.category}</span>
+                                        <span>${story.isPublished ? '✅ Publiée' : '📝 Brouillon'}</span>
+                                    </div>
+                                    
+                                    ${story.tags ? `
+                                        <div class="flex flex-wrap gap-1 mb-3">
+                                            ${story.tags.slice(0, 3).map(tag => `
+                                                <span class="${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs">
+                                                    #${tag}
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div class="flex items-center justify-between text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}">
+                                        <span>📝 ${story.wordCount.toLocaleString()} mots</span>
+                                        <span>📅 ${formatDate(story.updatedAt)}</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-2">
+                                        <span>👀 ${story.views} vues</span>
+                                        <span>❤️ ${story.likes} likes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+
+                        <!-- Placeholder pour nouvelle histoire -->
+                        <div onclick="setCurrentPage('write')" class="${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' : 'bg-white border-gray-200 hover:bg-gray-50'} border-2 border-dashed rounded-xl p-6 cursor-pointer transition-all duration-200 hover:border-blue-400">
+                            <div class="text-center">
+                                <div class="text-4xl mb-4">➕</div>
+                                <h3 class="text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}">Nouvelle Histoire</h3>
+                                <p class="${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm">Cliquez pour commencer à écrire</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Composant Write Page
+        function renderWritePage() {
+            const { isDarkMode, writeStory, showPreview } = state;
+            const wordCount = writeStory.content.trim() ? writeStory.content.trim().split(/\\s+/).length : 0;
+            const charCount = writeStory.content.length;
+            const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+            
+            return `
+                <div class="max-w-5xl mx-auto p-8">
+                    <!-- Zone titre et description -->
+                    <div class="${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-8 mb-8 shadow-sm border">
+                        <h2 class="text-lg font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-black'}">
+                            📝 Informations de base
+                        </h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}">
+                                    Titre de l'histoire *
+                                </label>
+                                <input
+                                    type="text"
+                                    value="${writeStory.title}"
+                                    onchange="state.writeStory.title = this.value; render();"
+                                    placeholder="Donnez un titre captivant à votre histoire..."
+                                    class="w-full px-4 py-3 text-lg rounded-lg transition-all ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} border focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}">
+                                    Description (résumé)
+                                </label>
+                                <textarea
+                                    value="${writeStory.description}"
+                                    onchange="state.writeStory.description = this.value; render();"
+                                    placeholder="Décrivez brièvement votre histoire pour attirer les lecteurs..."
+                                    rows="4"
+                                    class="w-full px-4 py-3 rounded-lg resize-none transition-all ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} border focus:ring-2 focus:ring-blue-500"
+                                ></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zone d'écriture avec aperçu intégré -->
+                    <div class="${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-8 shadow-sm border">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'}">
+                                ✍️ Contenu de l'histoire
+                            </h2>
+                            
+                            <!-- Onglets Écrire / Aperçu -->
+                            <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                                <button
+                                    onclick="state.showPreview = false; render();"
+                                    class="px-4 py-2 rounded-md text-sm font-medium transition-all ${!showPreview ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}"
+                                >
+                                    ✍️ Écrire
+                                </button>
+                                <button
+                                    onclick="state.showPreview = true; render();"
+                                    class="px-4 py-2 rounded-md text-sm font-medium transition-all ${showPreview ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400'}"
+                                >
+                                    👁️ Aperçu
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${!showPreview ? `
+                            <!-- Mode Écriture -->
+                            <textarea
+                                value="${writeStory.content}"
+                                onchange="state.writeStory.content = this.value; render();"
+                                placeholder="Il était une fois...
+
+Commencez à écrire votre histoire ici. Utilisez le formatage Markdown :
+
+# Titre principal
+## Sous-titre
+**Texte en gras**
+*Texte en italique*
+__Texte souligné__
+
+> Citation
+
+* * *
+
+Bonne écriture ! 📚"
+                                rows="25"
+                                class="w-full px-4 py-4 text-base leading-relaxed rounded-lg resize-none transition-all ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} border focus:ring-2 focus:ring-blue-500"
+                                style="font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.8;"
+                            ></textarea>
+                            
+                            <!-- Statistiques -->
+                            <div class="mt-6 flex items-center gap-8 text-sm px-4 py-3 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-600'}">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium">📝 Mots:</span>
+                                    <span class="font-semibold ${isDarkMode ? 'text-white' : 'text-black'}">
+                                        ${wordCount.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium">🔤 Caractères:</span>
+                                    <span class="font-semibold ${isDarkMode ? 'text-white' : 'text-black'}">
+                                        ${charCount.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium">⏱️ Temps de lecture:</span>
+                                    <span class="font-semibold ${isDarkMode ? 'text-white' : 'text-black'}">
+                                        ~${readingTime} min
+                                    </span>
+                                </div>
+                            </div>
+                        ` : `
+                            <!-- Mode Aperçu -->
+                            <div class="min-h-96 p-6 rounded-lg ${isDarkMode ? 'bg-gray-900 border-gray-600' : 'bg-gray-50 border-gray-300'} border">
+                                ${writeStory.content.trim() ? `
+                                    <div class="prose max-w-none text-lg leading-relaxed" style="font-family: 'Georgia', 'Times New Roman', serif;">
+                                        ${writeStory.title ? `
+                                            <h1 class="text-3xl font-bold mb-4 text-blue-600 border-b-2 border-blue-600 pb-2">
+                                                ${writeStory.title}
+                                            </h1>
+                                        ` : ''}
+                                        
+                                        ${writeStory.description ? `
+                                            <div class="italic ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-6 p-4 ${isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'} border-l-4 border-blue-500 rounded">
+                                                ${writeStory.description}
+                                            </div>
+                                        ` : ''}
+                                        
+                                        <div class="${isDarkMode ? 'text-gray-200' : 'text-gray-800'}">
+                                            ${formatContentForPreview(writeStory.content)}
+                                        </div>
+                                        
+                                        <div class="mt-8 p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} text-sm">
+                                            <strong>📊 Statistiques de l'histoire :</strong><br>
+                                            📝 ${wordCount} mots • 🔤 ${charCount} caractères • ⏱️ ~${readingTime} min de lecture
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div class="flex flex-col items-center justify-center h-full text-center py-16">
+                                        <div class="text-6xl mb-4">📝</div>
+                                        <h3 class="text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}">
+                                            Aucun contenu à prévisualiser
+                                        </h3>
+                                        <p class="${isDarkMode ? 'text-gray-400' : 'text-gray-600'}">
+                                            Commencez à écrire pour voir l'aperçu de votre histoire
+                                        </p>
+                                        <button
+                                            onclick="state.showPreview = false; render();"
+                                            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                        >
+                                            Commencer à écrire
+                                        </button>
+                                    </div>
+                                `}
+                            </div>
+                        `}
+                        
+                        <!-- Actions -->
+                        <div class="mt-6 flex items-center justify-between">
+                            <button onclick="setCurrentPage('stories')" class="flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg transition-colors">
+                                ← Retour aux histoires
+                            </button>
+                            
+                            <div class="flex gap-3">
+                                <button onclick="alert('💾 Histoire sauvegardée avec succès !')" class="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors">
+                                    💾 Sauvegarder
+                                </button>
+                                <button onclick="alert('🚀 Histoire publiée avec succès !')" class="flex items-center gap-2 px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors">
+                                    🚀 Publier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Composant View Story Page
+        function renderViewPage() {
+            const { isDarkMode, currentStory } = state;
+            if (!currentStory) return '<div>Histoire introuvable</div>';
+            
+            return `
+                <div class="max-w-4xl mx-auto px-4 py-8">
+                    <!-- En-tête -->
+                    <div class="flex items-center justify-between mb-8">
+                        <button onclick="setCurrentPage('stories')" class="flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors">
+                            ← Retour aux histoires
+                        </button>
+                        
+                        <div class="flex items-center gap-3">
+                            <button onclick="likeStory('${currentStory.id}')" class="flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors">
+                                ❤️ ${currentStory.likes}
+                            </button>
+                            <button onclick="alert('📋 Lien copié dans le presse-papiers !')" class="flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors">
+                                🔗 Partager
+                            </button>
+                            <button onclick="editStory('${currentStory.id}')" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors">
+                                ✏️ Modifier
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Informations de l'histoire -->
+                    <div class="${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-8 mb-8 shadow-sm border">
+                        <h1 class="text-4xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}">
+                            ${currentStory.title}
+                        </h1>
+                        
+                        ${currentStory.description ? `
+                            <p class="text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-6 leading-relaxed">
+                                ${currentStory.description}
+                            </p>
+                        ` : ''}
+
+                        <!-- Métadonnées -->
+                        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-6">
+                            <div class="flex items-center gap-2">
+                                <span class="text-blue-500">👤</span>
+                                <span class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'}">Par ${currentStory.author}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-green-500">📅</span>
+                                <span class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'}">${formatDate(currentStory.createdAt)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-purple-500">⏱️</span>
+                                <span class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'}">~${currentStory.readingTime} min de lecture</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-orange-500">👀</span>
+                                <span class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'}">${currentStory.views} vues</span>
+                            </div>
+                        </div>
+
+                        <!-- Tags -->
+                        ${currentStory.tags ? `
+                            <div class="flex flex-wrap gap-2 mb-6">
+                                ${currentStory.tags.map(tag => `
+                                    <span class="px-3 py-1 rounded-full text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}">
+                                        #${tag}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+
+                        <!-- Statistiques -->
+                        <div class="p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}">
+                            <div class="flex items-center gap-6 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-blue-500">📖</span>
+                                    <span class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'}">
+                                        ${currentStory.wordCount.toLocaleString()} mots
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span>📂</span>
+                                    <span class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'}">
+                                        ${currentStory.category}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span>📊</span>
+                                    <span class="${isDarkMode ? 'text-gray-300' : 'text-gray-600'}">
+                                        ${currentStory.isPublished ? 'Publiée' : 'Brouillon'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contenu de l'histoire -->
+                    <div class="${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl p-8 shadow-sm border">
+                        <div class="prose max-w-none text-lg leading-relaxed ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}" style="font-family: 'Georgia', 'Times New Roman', serif; line-height: 1.8;">
+                            ${formatContentForPreview(currentStory.content)}
+                        </div>
+                    </div>
+
+                    <!-- Actions en bas -->
+                    <div class="mt-8 flex items-center justify-center gap-4">
+                        <button onclick="likeStory('${currentStory.id}')" class="flex items-center gap-2 px-6 py-3 ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg transition-colors font-medium">
+                            ❤️ Aimer (${currentStory.likes})
+                        </button>
+                        <button onclick="alert('📋 Lien partagé avec succès !')" class="flex items-center gap-2 px-6 py-3 ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg transition-colors font-medium">
+                            🔗 Partager cette histoire
+                        </button>
+                        <button onclick="setCurrentPage('stories')" class="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium">
+                            📚 Découvrir d'autres histoires
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fonction de rendu principal
+        function render() {
+            const { isDarkMode, currentPage } = state;
+            
+            let content = '';
+            switch(currentPage) {
+                case 'stories':
+                    content = renderStoriesPage();
+                    break;
+                case 'write':
+                    content = renderWritePage();
+                    break;
+                case 'view':
+                    content = renderViewPage();
+                    break;
+                default:
+                    content = renderStoriesPage();
+            }
+
+            document.getElementById('app').innerHTML = `
+                <div class="${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-black'} min-h-screen transition-colors duration-300">
+                    ${renderHeader()}
+                    ${content}
+                </div>
+            `;
+        }
+
+        // Rendu initial
+        render();
+    </script>
+</body>
+</html>
