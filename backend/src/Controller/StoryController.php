@@ -47,7 +47,7 @@ class StoryController extends AbstractController
 
         // Search functionality - améliorer la recherche
         if ($search) {
-            $qb->andWhere('(s.title LIKE :search OR s.content LIKE :search OR s.description LIKE :search)')
+            $qb->andWhere('(s.title LIKE :search OR s.content LIKE :search OR s.summary LIKE :search)')
                ->setParameter('search', '%' . $search . '%');
         }
 
@@ -87,7 +87,7 @@ class StoryController extends AbstractController
         }
 
         if ($search) {
-            $totalQb->andWhere('(s.title LIKE :search OR s.content LIKE :search OR s.description LIKE :search)')
+            $totalQb->andWhere('(s.title LIKE :search OR s.content LIKE :search OR s.summary LIKE :search)')
                     ->setParameter('search', '%' . $search . '%');
         }
 
@@ -146,7 +146,7 @@ class StoryController extends AbstractController
                 'story' => [
                     'id' => $story->getId(),
                     'title' => $story->getTitle(),
-                    'description' => $story->getDescription(),
+                    'description' => $story->getSummary(),
                     'content' => $story->getContent(),
                     'status' => $story->getStatus(),
                     'word_count' => $story->getWordCount(),

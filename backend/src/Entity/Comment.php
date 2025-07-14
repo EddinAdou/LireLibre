@@ -30,6 +30,7 @@ class Comment
     private ?Story $story = null;
 
     #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(name: 'parent_comment_id', referencedColumnName: 'id')]
     #[Groups(['comment:read'])]
     private ?self $parentComment = null;
 
