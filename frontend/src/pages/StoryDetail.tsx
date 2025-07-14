@@ -122,7 +122,7 @@ const StoryDetail: React.FC = () => {
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          className="btn-link inline-flex items-center"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour
@@ -178,10 +178,8 @@ const StoryDetail: React.FC = () => {
               )}
               <button
                 onClick={handleLike}
-                className={`inline-flex items-center px-3 py-1 rounded-lg transition-colors ${
-                  liked
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                className={`btn-black-small inline-flex items-center ${
+                  liked ? 'bg-red-600 hover:bg-red-700' : ''
                 }`}
               >
                 <Heart className={`h-4 w-4 mr-1 ${liked ? 'fill-current' : ''}`} />
@@ -189,7 +187,7 @@ const StoryDetail: React.FC = () => {
               </button>
               <button
                 onClick={handleShare}
-                className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                className="btn-black-small inline-flex items-center"
               >
                 <Share2 className="h-4 w-4 mr-1" />
                 Partager

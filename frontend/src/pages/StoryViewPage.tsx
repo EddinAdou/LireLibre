@@ -218,7 +218,7 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
           </h1>
           <button
             onClick={() => navigate('/stories')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn-black-large"
           >
             Retour aux histoires
           </button>
@@ -238,7 +238,7 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
           <div className="flex items-center justify-between">
             <button
               onClick={() => navigate('/stories')}
-              className={`flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors`}
+              className="btn-black flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
               Retour aux histoires
@@ -247,11 +247,9 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
             <div className="flex items-center gap-3">
               <button
                 onClick={handleLike}
-                className={`flex items-center gap-2 px-4 py-2 ${
-                  isLiked 
-                    ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' 
-                    : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')
-                } rounded-lg transition-colors`}
+                className={`btn-black flex items-center gap-2 ${
+                  isLiked ? 'bg-red-600 hover:bg-red-700' : ''
+                }`}
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
                 {story.likes}
@@ -259,7 +257,7 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
 
               <button
                 onClick={handleShare}
-                className={`flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors`}
+                className="btn-black flex items-center gap-2"
               >
                 <Share2 className="h-4 w-4" />
                 Partager
@@ -267,7 +265,7 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
 
               <button
                 onClick={handleExport}
-                className={`flex items-center gap-2 px-4 py-2 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors`}
+                className="btn-black flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
                 Exporter
@@ -275,7 +273,7 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
 
               <button
                 onClick={() => navigate(`/write/${story.id}`)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+                className="btn-black flex items-center gap-2"
               >
                 <Edit className="h-4 w-4" />
                 Modifier
@@ -389,11 +387,9 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
         <div className="mt-8 flex items-center justify-center gap-4">
           <button
             onClick={handleLike}
-            className={`flex items-center gap-2 px-6 py-3 ${
-              isLiked 
-                ? 'bg-red-600 text-white hover:bg-red-700' 
-                : (isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-            } rounded-lg transition-colors font-medium`}
+            className={`btn-black-large flex items-center gap-2 ${
+              isLiked ? 'bg-red-600 hover:bg-red-700' : ''
+            }`}
           >
             <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
             {isLiked ? 'Aimé' : 'Aimer'} ({story.likes})
@@ -401,7 +397,7 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
 
           <button
             onClick={handleShare}
-            className={`flex items-center gap-2 px-6 py-3 ${isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg transition-colors font-medium`}
+            className="btn-black-large flex items-center gap-2"
           >
             <Share2 className="h-5 w-5" />
             Partager cette histoire
@@ -409,7 +405,7 @@ Théo, le nouveau bibliothécaire, ne savait pas encore qu'il était sur le poin
 
           <button
             onClick={() => navigate('/stories')}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium"
+            className="btn-black-large flex items-center gap-2"
           >
             <BookOpen className="h-5 w-5" />
             Découvrir d'autres histoires
